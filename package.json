@@ -1,0 +1,21 @@
+{
+  "name": "ccg-status-scanner",
+  "version": "0.1.0",
+  "description": "Scanner that holds the status of a CasperCG, by recieving OSC",
+  "main": "./src/app.js",
+  "author": "Kasper Olsson Hans (TV2 Denmark)",
+  "license": "MIT",
+  "dependencies": {
+    "@babel/cli": "^7.1.2",
+    "express": "^4.16.4",
+    "osc-js": "^1.2.2"
+  },
+  "scripts": {
+    "build": "babel src -d lib"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.1.2",
+    "@babel/node": "^7.0.0",
+    "@babel/preset-env": "^7.1.0"
+  }
+}
