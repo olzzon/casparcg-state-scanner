@@ -1,4 +1,4 @@
-import { CcgStateOSC } from './casparCGStateOSC';
+const osc = require('osc');
 const express = require('express');
 var express_graphql = require('express-graphql');
 var { buildSchema } = require('graphql');
@@ -37,23 +37,57 @@ var apiSchema = buildSchema(`
 export class App {
     constructor() {
         this.playing = false;
-        this.foregroundName = 'TEST OF FRONT';
-        this.backgroundName = 'TEST OF BACK';
+        this.foregroundName = 'foregroundname not yet recieved';
+        this.backgroundName = 'backgroundname not yet recieved';
         this.setupOscServer();
         this.setupExpressServer();
     }
 
     setupOscServer() {
-        const oscConnection = new CcgStateOSC({ plugin: new CcgStateOSC.WebsocketServerPlugin({ port: 5900 }) });
-        oscConnection.connect(); 
-        oscConnection.on('/channel/1/stage/layer/10/foreground/file/name', (message) => {
-            this.foregroundName = message.args;
-            console.log(message.args);
+        var getIPAddresses = function () {
+            var os = require("os"),
+                interfaces = os.networkInterfaces(),
+                ipAddresses = [];
+
+            for (var deviceName in interfaces) {
+                var addresses = interfaces[deviceName];
+                for (var i = 0; i < addresses.length; i++) {
+                    var addressInfo = addresses[i];
+                    if (addressInfo.family === "IPv4" && !addressInfo.internal) {
+                        ipAddresses.push(addressInfo.address);
+                    }
+                }
+            }
+
+            return ipAddresses;
+        };
+        const oscConnection = new osc.UDPPort({
+            localAddress: "0.0.0.0",
+            localPort: 5253
         });
-        oscConnection.on('/channel/1/stage/layer/10/background/file/name', (message) => {
-            this.backgroundName = message.args;
-            console.log(message.args);
+
+        oscConnection.on("ready", function () {
+            var ipAddresses = getIPAddresses();
+        
+            console.log("Listening for OSC over UDP.");
+            ipAddresses.forEach(function (address) {
+                console.log(" Host:", address + ", Port:", oscConnection.options.localPort);
+            });
         });
+
+        oscConnection.on('message', (message) => {
+            if (message.address === '/channel/1/stage/layer/10/foreground/file/name') {
+                this.foregroundName = message.args[0];                
+            }
+            if (message.address === '/channel/1/stage/layer/10/background/file/name') {
+                this.backgroundName = message.args[0];                
+            }
+            console.log(message.address, message.args);
+        });
+
+        oscConnection.open(); 
+        console.log(`OSC listening on port 5253`);
+
     }
 
 
@@ -66,7 +100,6 @@ export class App {
 
         // Root resolver
         var graphQlRoot = {
-            channelPlaying: () => this.playing,
             foregroundName: () => this.foregroundName,
             backgroundName: () => this.backgroundName,
         };
@@ -76,6 +109,6 @@ export class App {
             graphiql: true
         }));
 
-        server.listen(port, () => console.log(`Example app listening on port ${port}!`));
+        server.listen(port, () => console.log(`GraphQl listening on port ${port}/api`));
     }
 }

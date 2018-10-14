@@ -10,7 +10,7 @@
     "express": "^4.16.4",
     "express-graphql": "^0.6.12",
     "graphql": "^14.0.2",
-    "osc-js": "^1.2.2"
+    "osc": "^2.2.4"
   },
   "scripts": {
     "build": "babel src -d lib"
