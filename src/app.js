@@ -27,11 +27,29 @@ var { buildSchema } = require('graphql');
 
 //Build GraphQl Schemes:
 var apiSchema = buildSchema(`
-  type Query {
-    channelPlaying: Boolean
-    foregroundName: String
-    backgroundName: String
-  }
+    type Query {
+        channel(id: Int!): [Channel]
+    }
+
+    type Channel {
+        id: Int!
+        layers: [Layers]
+    }
+
+    type Layers {
+        id: Int!
+        foreground: Media
+        background: Media
+    }
+
+    type Media {
+        name: String
+        path: String
+        Time: Float
+        Length: Float
+        loop: Boolean
+        paused: Boolean
+    }
 `);
 
 export class App {
