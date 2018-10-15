@@ -76,18 +76,35 @@ export class App {
         });
 
         oscConnection.on('message', (message) => {
-            if (message.address === '/channel/1/stage/layer/10/foreground/file/name') {
+            var channelNumber = this.findChannelNumber(message.address);
+            var layerNumber = this.findLayerNumber(message.address);
+            if (message.address.includes('/foreground/file/name')) {
                 this.foregroundName = message.args[0];                
             }
-            if (message.address === '/channel/1/stage/layer/10/background/file/name') {
+            if (message.address.includes('/background/file/name')) {
                 this.backgroundName = message.args[0];                
             }
-            console.log(message.address, message.args);
+
+            //console.log(message.address, message.args);
         });
 
         oscConnection.open(); 
         console.log(`OSC listening on port 5253`);
 
+    }
+
+    findChannelNumber(string) {
+        var channel = string.replace("/channel/", "");
+        channel = channel.slice(0, (channel.indexOf("/")));
+        //console.log(channel);
+        return channel;
+    }
+
+    findLayerNumber(string) {
+        var channel = string.slice(string.indexOf('layer')+5);
+        channel = channel.slice(0, (channel.indexOf("/")));
+        //console.log(channel);
+        return channel;
     }
 
 
