@@ -144,8 +144,6 @@ export class App {
             if (message.address.includes('/background/file/paused')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
             }
-
-            //console.log(message.address, message.args);
         });
 
         oscConnection.open(); 
@@ -156,14 +154,12 @@ export class App {
     findChannelNumber(string) {
         var channel = string.replace("/channel/", "");
         channel = channel.slice(0, (channel.indexOf("/")));
-        //console.log(channel);
         return channel;
     }
 
     findLayerNumber(string) {
         var channel = string.slice(string.indexOf('layer/')+6);
         channel = channel.slice(0, (channel.indexOf("/")));
-        //console.log(channel);
         return channel;
     }
 
@@ -177,7 +173,6 @@ export class App {
             allChannels: () => {
                 const ccgChannelString = JSON.stringify(ccgChannel);
                 return ccgChannelString.replace(/"([^(")"]+)":/g,"$1:");
-                //return ccgChannel;
             },
             channel: () => {
                 return 'ToDo';

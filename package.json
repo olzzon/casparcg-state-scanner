@@ -13,7 +13,8 @@
     "osc": "^2.2.4"
   },
   "scripts": {
-    "build": "babel src -d lib"
+    "build": "babel src -d lib",
+    "start": "node ./lib/index.js"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
