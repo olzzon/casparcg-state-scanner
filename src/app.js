@@ -1,33 +1,14 @@
 const osc = require('osc');
 const express = require('express');
-var express_graphql = require('express-graphql');
+var graphqlHTTP = require('express-graphql');
 var { buildSchema } = require('graphql');
 
-//This is how a OSC message from CCG look like:
-/*
-        /channel/1/stage/layer/10/background/producer : <OSCVal s "empty">
-        /channel/1/stage/layer/10/foreground/file/name : <OSCVal s "go1080p25.mp4">
-        /channel/1/stage/layer/10/foreground/file/path : <OSCVal s "media/go1080p25.mp4">
-        /channel/1/stage/layer/10/foreground/file/streams/0/fps : (
-            "<OSCVal i 25>",
-            "<OSCVal i 1>"
-        )
-        /channel/1/stage/layer/10/foreground/file/streams/1/fps : (
-            "<OSCVal i 0>",
-            "<OSCVal i 0>"
-        )
-        /channel/1/stage/layer/10/foreground/file/time : (
-            "<OSCVal f 7.940000>",
-            "<OSCVal f 17.799999>"
-        )
-        /channel/1/stage/layer/10/foreground/loop : <OSCVal T>
-        /channel/1/stage/layer/10/foreground/paused : <OSCVal F>
-        /channel/1/stage/layer/10/foreground/producer : <OSCVal s "ffmpeg">
-*/
-
+//Scheme NOT YET IMPLEMENTED - ONLY allChannels works
 //Build GraphQl Schemes:
 var apiSchema = buildSchema(`
     type Query {
+        hello: String
+        allChannels: String
         channel(id: Int!): [Channel]
     }
 
@@ -55,42 +36,41 @@ var apiSchema = buildSchema(`
 //Setup Interface:
 var ccgNumberOfChannels = 4;
 var ccgNumberOfLayers = 30;
-var ccgChannel = new Array(ccgNumberOfChannels);
-var obj = { "layer": { 
+var ccgChannel = [];
+var obj = { 
         "foreground": {
-            "name": String,
-            "path": String,
-            "time": Number,
-            "length": Number,
-            "loop": Boolean,
-            "paused": Boolean
+            "name": "",
+            "path": "",
+            "time": 0,
+            "length": 0,
+            "loop": false,
+            "paused": true
         },
         "background": {
-            "name": String,
-            "path": String,
-            "time": Number,
-            "length": Number,
-            "loop": Boolean,
-            "paused": Boolean
+            "name": "",
+            "path": "",
+            "time": 0,
+            "length": 0,
+            "loop": false,
+            "paused": true
         }
-    }
+    
 };
 
 // Assign values to ccgChannel
 var ch;
 var l;
+var layers = [];
 for (ch=0; ch<ccgNumberOfChannels; ch++) {
     for (l=0; l<ccgNumberOfLayers; l++) {
-        ccgChannel[ch] = obj;
+        layers[l] = JSON.parse(JSON.stringify(obj));
     }    
+    ccgChannel[ch] = ccgChannel[ch] = JSON.parse(JSON.stringify({ "layer" : layers }));
 }
-
 
 export class App {
     constructor() {
         this.playing = false;
-        this.foregroundName = 'foregroundname not yet recieved';
-        this.backgroundName = 'backgroundname not yet recieved';
         this.setupOscServer();
         this.setupExpressServer();
     }
@@ -128,13 +108,41 @@ export class App {
         });
 
         oscConnection.on('message', (message) => {
-            var channelNumber = this.findChannelNumber(message.address);
-            var layerNumber = this.findLayerNumber(message.address);
+            var channelIndex = this.findChannelNumber(message.address)-1;
+            var layerIndex = this.findLayerNumber(message.address)-1;
+            //Handle foreground:
             if (message.address.includes('/foreground/file/name')) {
-                ccgChannel[channelNumber].layer[layerNumber].foreground.name = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
             }
+            if (message.address.includes('/foreground/file/path')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];                
+            }
+            if (message.address.includes('/foreground/file/time')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
+            }
+            if (message.address.includes('/foreground/file/loop')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
+            }
+            if (message.address.includes('/foreground/file/paused')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
+            }
+            //Handle background:
             if (message.address.includes('/background/file/name')) {
-                ccgChannel[channelNumber].layer[layerNumber].background.name = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
+            }
+            if (message.address.includes('/background/file/path')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];                
+            }
+            if (message.address.includes('/background/file/time')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
+            }
+            if (message.address.includes('/background/file/loop')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
+            }
+            if (message.address.includes('/background/file/paused')) {
+                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
             }
 
             //console.log(message.address, message.args);
@@ -153,7 +161,7 @@ export class App {
     }
 
     findLayerNumber(string) {
-        var channel = string.slice(string.indexOf('layer')+5);
+        var channel = string.slice(string.indexOf('layer/')+6);
         channel = channel.slice(0, (channel.indexOf("/")));
         //console.log(channel);
         return channel;
@@ -164,15 +172,18 @@ export class App {
         const server = express();
         const port = 5254;
 
-        //server.get('/name', (req, res) => res.send(this.foregroundProducername));
-        //server.get('/playing', (req, res) => res.send(this.playing));
-
-        // Root resolver
+        // GraphQL Root resolver
         var graphQlRoot = {
-            foregroundName: () => ccgChannel[0].layer[9].foreground.name,
-            backgroundName: () => ccgChannel[0].layer[9].background.name,
+            allChannels: () => {
+                const ccgChannelString = JSON.stringify(ccgChannel);
+                return ccgChannelString.replace(/"([^(")"]+)":/g,"$1:");
+                //return ccgChannel;
+            },
+            channel: () => {
+                return 'ToDo';
+            }
         };
-        server.use('/api', express_graphql({
+        server.use('/api', graphqlHTTP({
             schema: apiSchema,
             rootValue: graphQlRoot,
             graphiql: true
