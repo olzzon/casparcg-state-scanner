@@ -52,6 +52,40 @@ var apiSchema = buildSchema(`
     }
 `);
 
+//Setup Interface:
+var ccgNumberOfChannels = 4;
+var ccgNumberOfLayers = 30;
+var ccgChannel = new Array(ccgNumberOfChannels);
+var obj = { "layer": { 
+        "foreground": {
+            "name": String,
+            "path": String,
+            "time": Number,
+            "length": Number,
+            "loop": Boolean,
+            "paused": Boolean
+        },
+        "background": {
+            "name": String,
+            "path": String,
+            "time": Number,
+            "length": Number,
+            "loop": Boolean,
+            "paused": Boolean
+        }
+    }
+};
+
+// Assign values to ccgChannel
+var ch;
+var l;
+for (ch=0; ch<ccgNumberOfChannels; ch++) {
+    for (l=0; l<ccgNumberOfLayers; l++) {
+        ccgChannel[ch] = obj;
+    }    
+}
+
+
 export class App {
     constructor() {
         this.playing = false;
@@ -97,10 +131,10 @@ export class App {
             var channelNumber = this.findChannelNumber(message.address);
             var layerNumber = this.findLayerNumber(message.address);
             if (message.address.includes('/foreground/file/name')) {
-                this.foregroundName = message.args[0];                
+                ccgChannel[channelNumber].layer[layerNumber].foreground.name = message.args[0];                
             }
             if (message.address.includes('/background/file/name')) {
-                this.backgroundName = message.args[0];                
+                ccgChannel[channelNumber].layer[layerNumber].background.name = message.args[0];                
             }
 
             //console.log(message.address, message.args);
@@ -135,8 +169,8 @@ export class App {
 
         // Root resolver
         var graphQlRoot = {
-            foregroundName: () => this.foregroundName,
-            backgroundName: () => this.backgroundName,
+            foregroundName: () => ccgChannel[0].layer[9].foreground.name,
+            backgroundName: () => ccgChannel[0].layer[9].background.name,
         };
         server.use('/api', express_graphql({
             schema: apiSchema,
