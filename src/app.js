@@ -101,10 +101,10 @@ export class App {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
                 ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
             }
-            if (message.address.includes('/foreground/file/loop')) {
+            if (message.address.includes('/foreground/loop')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
             }
-            if (message.address.includes('/foreground/file/paused')) {
+            if (message.address.includes('/foreground/paused')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
             }
             //Handle background:
@@ -118,10 +118,10 @@ export class App {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
                 ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
             }
-            if (message.address.includes('/background/file/loop')) {
+            if (message.address.includes('/background/loop')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
             }
-            if (message.address.includes('/background/file/paused')) {
+            if (message.address.includes('/background/paused')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
             }
         });
