@@ -27,6 +27,12 @@ Returns selected layer of channel
 ```
 { layer(ch: 1, l: 10) }
 ```
+### timeLeft(ch: int, l: int):
+Returns countdown of channel, layer, file
+```
+{ timeLeft(ch: 1, l: 10) }
+```
+
 
 ##
 ## Start:

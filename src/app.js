@@ -10,6 +10,7 @@ var apiSchema = buildSchema(`
         allChannels: String
         channel(ch: Int!): String
         layer(ch: Int!, l: Int!): String
+        timeLeft(ch: Int!, l: Int!): String
     }
 `);
 
@@ -90,7 +91,7 @@ export class App {
         oscConnection.on('message', (message) => {
             var channelIndex = this.findChannelNumber(message.address)-1;
             var layerIndex = this.findLayerNumber(message.address)-1;
-            //Handle foreground:
+            //Handle foreground messages:
             if (message.address.includes('/foreground/file/name')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
             }
@@ -107,7 +108,7 @@ export class App {
             if (message.address.includes('/foreground/paused')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
             }
-            //Handle background:
+            //Handle background messages:
             if (message.address.includes('/background/file/name')) {
                 ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
             }
@@ -161,6 +162,9 @@ export class App {
             layer: (args) => {
                 const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
                 return ccgLayerString.replace(/"([^(")"]+)":/g,"$1:");
+            },
+            timeLeft: (args) => {
+                return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
             } 
         };
         server.use('/api', graphqlHTTP({
