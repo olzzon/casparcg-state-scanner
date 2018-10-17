@@ -3,33 +3,13 @@ const express = require('express');
 var graphqlHTTP = require('express-graphql');
 var { buildSchema } = require('graphql');
 
-//Scheme NOT YET IMPLEMENTED - ONLY allChannels works
-//Build GraphQl Schemes:
+//Query schema for GraphQL:
 var apiSchema = buildSchema(`
     type Query {
         hello: String
         allChannels: String
-        channel(id: Int!): [Channel]
-    }
-
-    type Channel {
-        id: Int!
-        layers: [Layers]
-    }
-
-    type Layers {
-        id: Int!
-        foreground: Media
-        background: Media
-    }
-
-    type Media {
-        name: String
-        path: String
-        Time: Float
-        Length: Float
-        loop: Boolean
-        paused: Boolean
+        channel(ch: Int!): String
+        layer(ch: Int!, l: Int!): String
     }
 `);
 
@@ -171,12 +151,17 @@ export class App {
         // GraphQL Root resolver
         var graphQlRoot = {
             allChannels: () => {
-                const ccgChannelString = JSON.stringify(ccgChannel);
-                return ccgChannelString.replace(/"([^(")"]+)":/g,"$1:");
+                const ccgString = JSON.stringify(ccgChannel);
+                return ccgString.replace(/"([^(")"]+)":/g,"$1:");
             },
-            channel: () => {
-                return 'ToDo';
-            }
+            channel: (ch) => {
+                const ccgChString = JSON.stringify(ccgChannel[ch.ch-1]);
+                return ccgChString.replace(/"([^(")"]+)":/g,"$1:");
+            },
+            layer: (args) => {
+                const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
+                return ccgLayerString.replace(/"([^(")"]+)":/g,"$1:");
+            } 
         };
         server.use('/api', graphqlHTTP({
             schema: apiSchema,
