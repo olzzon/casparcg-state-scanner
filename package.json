@@ -2,7 +2,7 @@
   "name": "ccg-status-scanner",
   "version": "0.1.0",
   "description": "Scanner that holds the status of a CasperCG, by recieving OSC",
-  "main": "./src/app.js",
+  "main": "./src/index.js",
   "author": "Kasper Olsson Hans (TV2 Denmark)",
   "license": "MIT",
   "dependencies": {
@@ -10,15 +10,18 @@
     "express": "^4.16.4",
     "express-graphql": "^0.6.12",
     "graphql": "^14.0.2",
-    "osc": "^2.2.4"
+    "osc": "https://github.com/PieceMeta/osc.js/tarball/master"
   },
   "scripts": {
     "build": "babel src -d dist",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.js",
+    "build-linux": "yarn pkg -t node10-linux ./dist/index.js --output ./dist/CasparCG-state-scanner",
+    "build-win": "yarn pkg -t node10-win ./dist/index.js --output ./dist/CasparCG-state-scanner.exe"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
     "@babel/node": "^7.0.0",
-    "@babel/preset-env": "^7.1.0"
+    "@babel/preset-env": "^7.1.0",
+    "pkg": "^4.3.4"
   }
 }
