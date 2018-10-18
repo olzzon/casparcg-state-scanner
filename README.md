@@ -34,7 +34,6 @@ Returns countdown of channel, layer, file
 ```
 
 
-##
 ## Start:
 ```
 yarn build
@@ -45,6 +44,13 @@ After that open a browser:
 http://localhost:5254/api
 ```
 and try out queries
+
+##Build for Linux and Windows:
+```
+yarn build
+yarn build-win
+yarn build-linux
+```
 
 ### ToDo:
 Queries so you can ask for e.g. time left of a single Channel-Layer
