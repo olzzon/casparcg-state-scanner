@@ -6,7 +6,6 @@ var { buildSchema } = require('graphql');
 //Query schema for GraphQL:
 var apiSchema = buildSchema(`
     type Query {
-        hello: String
         allChannels: String
         channel(ch: Int!): String
         layer(ch: Int!, l: Int!): String
@@ -18,7 +17,7 @@ var apiSchema = buildSchema(`
 var ccgNumberOfChannels = 4;
 var ccgNumberOfLayers = 30;
 var ccgChannel = [];
-var obj = { 
+var obj = {
         "foreground": {
             "name": "",
             "path": "",
@@ -35,7 +34,7 @@ var obj = {
             "loop": false,
             "paused": true
         }
-    
+
 };
 
 // Assign values to ccgChannel
@@ -45,7 +44,7 @@ var layers = [];
 for (ch=0; ch<ccgNumberOfChannels; ch++) {
     for (l=0; l<ccgNumberOfLayers; l++) {
         layers[l] = JSON.parse(JSON.stringify(obj));
-    }    
+    }
     ccgChannel[ch] = ccgChannel[ch] = JSON.parse(JSON.stringify({ "layer" : layers }));
 }
 
@@ -81,7 +80,7 @@ export class App {
 
         oscConnection.on("ready", function () {
             var ipAddresses = getIPAddresses();
-        
+
             console.log("Listening for OSC over UDP.");
             ipAddresses.forEach(function (address) {
                 console.log(" Host:", address + ", Port:", oscConnection.options.localPort);
@@ -93,41 +92,41 @@ export class App {
             var layerIndex = this.findLayerNumber(message.address)-1;
             //Handle foreground messages:
             if (message.address.includes('/foreground/file/name')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
             }
             if (message.address.includes('/foreground/file/path')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
             }
             if (message.address.includes('/foreground/file/time')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
-                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
             }
             if (message.address.includes('/foreground/loop')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
             }
             if (message.address.includes('/foreground/paused')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
             }
             //Handle background messages:
             if (message.address.includes('/background/file/name')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
             }
             if (message.address.includes('/background/file/path')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
             }
             if (message.address.includes('/background/file/time')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];                
-                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
             }
             if (message.address.includes('/background/loop')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
             }
             if (message.address.includes('/background/paused')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];                
+                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
             }
         });
 
-        oscConnection.open(); 
+        oscConnection.open();
         console.log(`OSC listening on port 5253`);
 
     }
@@ -161,17 +160,22 @@ export class App {
             },
             layer: (args) => {
                 const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
-                return ccgLayerString.replace(/"([^(")"]+)":/g,"$1:");
+                return ccgLayerString.replace(/\\/g,"");
             },
             timeLeft: (args) => {
                 return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
-            } 
+            }
         };
         server.use('/api', graphqlHTTP({
             schema: apiSchema,
             rootValue: graphQlRoot,
-            graphiql: true
+            graphiql: false
         }));
+        server.use('/test', graphqlHTTP({
+          schema: apiSchema,
+          rootValue: graphQlRoot,
+          graphiql: true
+      }));
 
         server.listen(port, () => console.log(`GraphQl listening on port ${port}/api`));
     }
