@@ -41,9 +41,14 @@ yarn start
 ```
 After that open a browser:
 ```
-http://localhost:5254/api
+http://localhost:5254/test
 ```
 and try out queries
+
+### For API calls from other programs use:
+```
+http://xxx.xxx.xxx.xxx:5254/api
+```
 
 ##Build for Linux and Windows:
 ```
