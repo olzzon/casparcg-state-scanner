@@ -170,39 +170,45 @@ export class App {
         oscConnection.on('message', (message) => {
             var channelIndex = this.findChannelNumber(message.address)-1;
             var layerIndex = this.findLayerNumber(message.address)-1;
-            //Handle foreground messages:
-            if (message.address.includes('/foreground/file/name')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-            }
-            if (message.address.includes('/foreground/file/path')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-            }
-            if (message.address.includes('/foreground/file/time')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
-                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
-            }
-            if (message.address.includes('/foreground/loop')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
-            }
-            if (message.address.includes('/foreground/paused')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
-            }
-            //Handle background messages:
-            if (message.address.includes('/background/file/name')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-            }
-            if (message.address.includes('/background/file/path')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-            }
-            if (message.address.includes('/background/file/time')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
-                ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
-            }
-            if (message.address.includes('/background/loop')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
-            }
-            if (message.address.includes('/background/paused')) {
-                ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+            if (channel > 0) {
+                //Handle foreground messages:
+                if (message.address.includes('/foreground/')) {
+                    if (message.address.includes('/filename')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                    }
+                    if (message.address.includes('/file-frame-number')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args;
+                    }
+                    if (message.address.includes('/file-nb-frames')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args;
+                    }
+                    if (message.address.includes('/loop')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
+                    }
+                    if (message.address.includes('/paused')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+                    }
+                }
+                //Handle background messages:
+                if (message.address.includes('/background/')) {
+                    if (message.address.includes('/filename')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                    }
+                    if (message.address.includes('/file-frame-number')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args;
+                    }
+                    if (message.address.includes('/file-nb-frames')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args;
+                    }
+                    if (message.address.includes('/loop')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
+                    }
+                    if (message.address.includes('/paused')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+                    }
+                }
             }
         });
 
