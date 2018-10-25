@@ -67,8 +67,8 @@ export class App {
         // in current version of casparcg-connection the port has to be assigned as a seperate parameter.
         this.ccgConnection = new CasparCG(
             {
-            host: "91.224.210.81",
-            port: 21914,
+            host: "localhost",
+            port: 5250,
             autoConnect: false,
         });
         this.ccgConnection.connect();
