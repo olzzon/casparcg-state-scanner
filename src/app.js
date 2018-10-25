@@ -1,7 +1,11 @@
 const osc = require('osc');
 const express = require('express');
-var graphqlHTTP = require('express-graphql');
-var { buildSchema } = require('graphql');
+const graphqlHTTP = require('express-graphql');
+const { buildSchema } = require('graphql');
+//For casparTCPLog but not in use as CCG2.2 does not support it:
+const net = require('net');
+import {CasparCG} from 'casparcg-connection';
+
 
 //Query schema for GraphQL:
 var apiSchema = buildSchema(`
@@ -34,7 +38,6 @@ var obj = {
             "loop": false,
             "paused": true
         }
-
 };
 
 // Assign values to ccgChannel
@@ -51,8 +54,85 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.playing = false;
+        const _this = this;
+
         this.setupOscServer();
+        //this.setupCasparTcpLogServer();
         this.setupExpressServer();
+        this.setupAcmpConnection();
+
+    }
+
+    setupAcmpConnection() {
+        // in current version of casparcg-connection the port has to be assigned as a seperate parameter.
+        this.ccgConnection = new CasparCG(
+            {
+            host: "91.224.210.81",
+            port: 21914,
+            autoConnect: false,
+        });
+        this.ccgConnection.connect();
+        var connectionTimer = setInterval(() => this.updateAcmpData(), 3000);
+    }
+
+    updateAcmpData() {
+        var channel = 1;
+        var layer = 10;
+        this.ccgConnection.info(channel,10)
+        .then((response) => {
+            ccgChannel[channel-1].layer[layer-1].foreground.name = response.response.data.foreground.producer.filename;
+            ccgChannel[channel-1].layer[layer-1].background.name = response.response.data.background.producer.filename;
+            console.log(response.response.data);
+        });
+        this.timeoutPromise(1000, this.ccgConnection.version())
+        .then ((response) => {
+            console.log("Server Online - version:", response.response.data);
+        })
+        .catch((error) =>{
+            console.log(error);
+        });
+    }
+
+
+    timeoutPromise(ms, promise) {
+        return new Promise((resolve, reject) => {
+        setTimeout(() => {
+            reject(new Error("Offline: Server was to long to respond"));
+        }, ms);
+        promise.then(resolve, reject);
+        });
+    }
+
+
+    setupCasparTcpLogServer() {
+        //Setup TCP errorlog reciever:
+        const casparLogHost = "localhost";
+        const casparLogPort = 3250;
+        const casparLogClient = new net.Socket();
+
+        casparLogClient.connect(casparLogPort, casparLogHost, () => {
+            console.log('CasparLogClient connected to: ' + casparLogHost + ':' + casparLogPort);
+        });
+
+        casparLogClient.on('data', (data) => {
+            console.log("New LOG line: ", data);
+            if (data.includes("LOADBG ")) {
+                this.readCasparLog(data ,"LOADBG", "background");
+            }
+            if (data.includes("LOAD ")) {
+                this.readCasparLog(data ,"LOAD", "foreground");
+            }
+        });
+    }
+
+    readCasparLog(data, commandName, varName) {
+        var amcpCommand = data.substr(data.indexOf(commandName));
+        var amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
+        var amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
+        var nameStart = amcpCommand.indexOf('"', 1);
+        var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
+        ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
+        console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
     }
 
     setupOscServer() {
@@ -152,15 +232,15 @@ export class App {
         var graphQlRoot = {
             allChannels: () => {
                 const ccgString = JSON.stringify(ccgChannel);
-                return ccgString.replace(/"([^(")"]+)":/g,"$1:");
+                return ccgString;
             },
             channel: (ch) => {
                 const ccgChString = JSON.stringify(ccgChannel[ch.ch-1]);
-                return ccgChString.replace(/"([^(")"]+)":/g,"$1:");
+                return ccgChString;
             },
             layer: (args) => {
                 const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
-                return ccgLayerString.replace(/\\/g,"");
+                return ccgLayerString;
             },
             timeLeft: (args) => {
                 return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
@@ -172,10 +252,10 @@ export class App {
             graphiql: false
         }));
         server.use('/test', graphqlHTTP({
-          schema: apiSchema,
-          rootValue: graphQlRoot,
-          graphiql: true
-      }));
+            schema: apiSchema,
+            rootValue: graphQlRoot,
+            graphiql: true
+        }));
 
         server.listen(port, () => console.log(`GraphQl listening on port ${port}/api`));
     }
