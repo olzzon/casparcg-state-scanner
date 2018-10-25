@@ -170,45 +170,22 @@ export class App {
         oscConnection.on('message', (message) => {
             var channelIndex = this.findChannelNumber(message.address)-1;
             var layerIndex = this.findLayerNumber(message.address)-1;
-            if (channel > 0) {
+            if (message.address.includes('/stage/layer')) {
                 //Handle foreground messages:
-                if (message.address.includes('/foreground/')) {
-                    if (message.address.includes('/filename')) {
+                    if (message.address.includes('/file/path')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
                     }
-                    if (message.address.includes('/file-frame-number')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args;
+                    if (message.address.includes('file/time')) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
                     }
-                    if (message.address.includes('/file-nb-frames')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args;
-                    }
-                    if (message.address.includes('/loop')) {
+                    if (message.address.includes('file/loop')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
                     }
-                    if (message.address.includes('/paused')) {
+                    if (message.address.includes('file/paused')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
                     }
-                }
-                //Handle background messages:
-                if (message.address.includes('/background/')) {
-                    if (message.address.includes('/filename')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                    }
-                    if (message.address.includes('/file-frame-number')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args;
-                    }
-                    if (message.address.includes('/file-nb-frames')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args;
-                    }
-                    if (message.address.includes('/loop')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
-                    }
-                    if (message.address.includes('/paused')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
-                    }
-                }
             }
         });
 
