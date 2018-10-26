@@ -92,16 +92,14 @@ export class App {
             .then((response) => {
                 ccgChannel[channel-1].layer[layer-1].foreground.name = response.response.data.foreground.producer.filename;
                 ccgChannel[channel-1].layer[layer-1].background.name = response.response.data.background.producer.filename;
-                console.log(response.response.data);
+                ccgStatus.serverOnline = true;
+            })
+            .catch((error) => {
+                ccgStatus.serverOnline = false;
+                console.log(error);
             });
         }
-            // this.timeoutPromise(1000, this.ccgConnection.version())
-            // .then ((response) => {
-            //     console.log("Server Online - version:", response.response.data);
-            // })
-            // .catch((error) =>{
-            //     console.log(error);
-            // });
+
     }
 
 
