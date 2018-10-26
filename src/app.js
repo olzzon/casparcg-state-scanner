@@ -8,6 +8,8 @@ import {CasparCG} from 'casparcg-connection';
 //Query schema for GraphQL:
 var apiSchema = buildSchema(`
     type Query {
+        serverOnline: Boolean
+        serverVersion: String
         allChannels: String
         channel(ch: Int!): String
         layer(ch: Int!, l: Int!): String
@@ -18,6 +20,10 @@ var apiSchema = buildSchema(`
 //Setup Interface:
 var ccgNumberOfChannels = 4;
 var ccgNumberOfLayers = 30;
+var ccgStatus = {
+    serverOnline: false,
+    serverVersion: ""
+};
 var ccgChannel = [];
 var obj = {
         "foreground": {
@@ -71,6 +77,11 @@ export class App {
             autoConnect: false,
         });
         this.ccgConnection.connect();
+        this.ccgConnection.version()
+        .then((response) => {
+            ccgStatus.serverOnline = true;
+            ccgStatus.version = response.response.data;
+        });
         var connectionTimer = setInterval(() => this.updateAcmpData(), 300);
     }
 
@@ -196,6 +207,9 @@ export class App {
             },
             timeLeft: (args) => {
                 return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
+            },
+            serverOnline: () => {
+                return ccgStatus.serverOnline;
             }
         };
         server.use('/api', graphqlHTTP({
