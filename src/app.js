@@ -77,11 +77,17 @@ export class App {
 
         casparLogClient.connect(casparLogPort, casparLogHost, () => {
             console.log('CasparLogClient connected to: ' + casparLogHost + ':' + casparLogPort);
+            ccgStatus.serverOnline = true;
+        });
+
+        casparLogClient.on('error', (error) => {
+            console.log("WARNING: LOAD and LOADBG commands will not update state as the");
+            console.log("CasparCG server is offline or TCP log is not enabled in config", error);
         });
 
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data);
-            if (data.includes("LOADBG ") || data.includes("LOAD ")) {
+            if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
                 this.updateAcmpData();
             }
         });
@@ -110,7 +116,6 @@ export class App {
             ccgStatus.serverOnline = true;
             ccgStatus.version = response.response.data;
         });
-        //var connectionTimer = setInterval(() => this.updateAcmpData(), 300);
     }
 
     updateAcmpData() {
