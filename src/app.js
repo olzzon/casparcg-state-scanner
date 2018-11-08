@@ -82,6 +82,7 @@ export class App {
         casparLogClient.on('error', (error) => {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
+            console.log('casparcg tcp log should be set to IP: ' + casparLogHost + " Port : " + casparLogPort);
             intervalConnect = setTimeout(() => this.connectLog(casparLogPort, casparLogHost, casparLogClient), 5000);
         });
 
