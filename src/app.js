@@ -61,6 +61,7 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.playing = false;
+        this.connectLog = this.connectLog.bind(this);
         this.setupOscServer();
         this.setupExpressServer();
 
@@ -74,15 +75,14 @@ export class App {
         const casparLogHost = "localhost";
         const casparLogPort = 3250;
         const casparLogClient = new net.Socket();
+        var intervalConnect;
 
-        casparLogClient.connect(casparLogPort, casparLogHost, () => {
-            console.log('CasparLogClient connected to: ' + casparLogHost + ':' + casparLogPort);
-            ccgStatus.serverOnline = true;
-        });
+        this.connectLog(casparLogPort, casparLogHost, casparLogClient);
 
         casparLogClient.on('error', (error) => {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
+            intervalConnect = setTimeout(() => this.connectLog(casparLogPort, casparLogHost, casparLogClient), 5000);
         });
 
         casparLogClient.on('data', (data) => {
@@ -90,6 +90,13 @@ export class App {
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
                 this.updateAcmpData();
             }
+        });
+    }
+
+    connectLog(port, host, client) {
+        client.connect(port, host, () => {
+            console.log('CasparLogClient connected to: ' + host + ':' + port);
+            ccgStatus.serverOnline = true;
         });
     }
 
