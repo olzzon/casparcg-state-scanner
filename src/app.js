@@ -2,6 +2,8 @@ const osc = require('osc');
 const express = require('express');
 const graphqlHTTP = require('express-graphql');
 const { buildSchema } = require('graphql');
+const net = require('net');
+
 import {CasparCG} from 'casparcg-connection';
 
 
@@ -20,6 +22,7 @@ var apiSchema = buildSchema(`
 //Setup Interface:
 var ccgNumberOfChannels = 4;
 var ccgNumberOfLayers = 30;
+var ccgDefaultLayer = 10;
 var ccgStatus = {
     serverOnline: false,
     serverVersion: ""
@@ -58,16 +61,55 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.playing = false;
-        const _this = this;
-
+        this.connectLog = this.connectLog.bind(this);
         this.setupOscServer();
         this.setupExpressServer();
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         this.setupAcmpConnection();
-
+        this.setupCasparTcpLogServer();
     }
 
+    setupCasparTcpLogServer() {
+        //Setup TCP errorlog reciever:
+        const casparLogHost = "localhost";
+        const casparLogPort = 3250;
+        const casparLogClient = new net.Socket();
+        var intervalConnect;
+
+        this.connectLog(casparLogPort, casparLogHost, casparLogClient);
+
+        casparLogClient.on('error', (error) => {
+            console.log("WARNING: LOAD and LOADBG commands will not update state as the");
+            console.log("CasparCG server is offline or TCP log is not enabled in config", error);
+            console.log('casparcg tcp log should be set to IP: ' + casparLogHost + " Port : " + casparLogPort);
+            intervalConnect = setTimeout(() => this.connectLog(casparLogPort, casparLogHost, casparLogClient), 5000);
+        });
+
+        casparLogClient.on('data', (data) => {
+            console.log("New LOG line: ", data);
+            if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
+                this.updateAcmpData();
+            }
+        });
+    }
+
+    connectLog(port, host, client) {
+        client.connect(port, host, () => {
+            console.log('CasparLogClient connected to: ' + host + ':' + port);
+            ccgStatus.serverOnline = true;
+        });
+    }
+
+    readCasparLog(data, commandName, varName) {
+        var amcpCommand = data.substr(data.indexOf(commandName));
+        var amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
+        var amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
+        var nameStart = amcpCommand.indexOf('"', 1);
+        var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
+        ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
+        console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
+    }
     setupAcmpConnection() {
         // in current version of casparcg-connection the port has to be assigned as a seperate parameter.
         this.ccgConnection = new CasparCG(
@@ -82,16 +124,14 @@ export class App {
             ccgStatus.serverOnline = true;
             ccgStatus.version = response.response.data;
         });
-        var connectionTimer = setInterval(() => this.updateAcmpData(), 300);
     }
 
     updateAcmpData() {
-        var layer = 10;
         for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
             this.ccgConnection.info(channel,10)
             .then((response) => {
-                ccgChannel[channel-1].layer[layer-1].foreground.name = response.response.data.foreground.producer.filename;
-                ccgChannel[channel-1].layer[layer-1].background.name = response.response.data.background.producer.filename;
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = response.response.data.foreground.producer.filename;
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = response.response.data.background.producer.filename;
                 ccgStatus.serverOnline = true;
             })
             .catch((error) => {
