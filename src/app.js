@@ -1,23 +1,10 @@
 const osc = require('osc');
-const express = require('express');
-const graphqlHTTP = require('express-graphql');
-const { buildSchema } = require('graphql');
+import { ApolloServer, gql } from 'apollo-server';
+
 const net = require('net');
 
 import {CasparCG} from 'casparcg-connection';
 
-
-//Query schema for GraphQL:
-var apiSchema = buildSchema(`
-    type Query {
-        serverOnline: Boolean
-        serverVersion: String
-        allChannels: String
-        channel(ch: Int!): String
-        layer(ch: Int!, l: Int!): String
-        timeLeft(ch: Int!, l: Int!): String
-    }
-`);
 
 //Setup Interface:
 var ccgNumberOfChannels = 4;
@@ -63,7 +50,7 @@ export class App {
         this.playing = false;
         this.connectLog = this.connectLog.bind(this);
         this.setupOscServer();
-        this.setupExpressServer();
+        this.setupGraphQlExpressServer();
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         this.setupAcmpConnection();
@@ -101,6 +88,7 @@ export class App {
         });
     }
 
+    /* For use if INFO becomes deprecated like en 2.2beta
     readCasparLog(data, commandName, varName) {
         var amcpCommand = data.substr(data.indexOf(commandName));
         var amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
@@ -110,8 +98,9 @@ export class App {
         ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
         console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
     }
+    */
+
     setupAcmpConnection() {
-        // in current version of casparcg-connection the port has to be assigned as a seperate parameter.
         this.ccgConnection = new CasparCG(
             {
             host: "localhost",
@@ -225,42 +214,52 @@ export class App {
     }
 
 
-    setupExpressServer() {
-        const server = express();
+    setupGraphQlExpressServer() {
+
         const port = 5254;
 
-        // GraphQL Root resolver
-        var graphQlRoot = {
-            allChannels: () => {
-                const ccgString = JSON.stringify(ccgChannel);
-                return ccgString;
-            },
-            channel: (ch) => {
-                const ccgChString = JSON.stringify(ccgChannel[ch.ch-1]);
-                return ccgChString;
-            },
-            layer: (args) => {
-                const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
-                return ccgLayerString;
-            },
-            timeLeft: (args) => {
-                return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
-            },
-            serverOnline: () => {
-                return ccgStatus.serverOnline;
+        //Query schema for GraphQL:
+        const typeDefs = gql `
+        type Query {
+            serverOnline: Boolean
+            serverVersion: String
+            allChannels: String
+            channel(ch: Int!): String
+            layer(ch: Int!, l: Int!): String
+            timeLeft(ch: Int!, l: Int!): String
+        }
+        `;
+
+
+        // GraphQL resolver
+        const resolvers = {
+            Query: {
+                allChannels: () => {
+                    const ccgString = JSON.stringify(ccgChannel);
+                    return ccgString;
+                },
+                channel: (obj, args, context, info) => {
+                    const ccgChString = JSON.stringify(ccgChannel[args.ch-1]);
+                    return ccgChString;
+                },
+                layer: (obj, args, context, info) => {
+                    const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
+                    return ccgLayerString;
+                },
+                timeLeft: (obj, args, context, info) => {
+                    return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
+                },
+                serverOnline: () => {
+                    return ccgStatus.serverOnline;
+                }
             }
         };
-        server.use('/api', graphqlHTTP({
-            schema: apiSchema,
-            rootValue: graphQlRoot,
-            graphiql: false
-        }));
-        server.use('/test', graphqlHTTP({
-            schema: apiSchema,
-            rootValue: graphQlRoot,
-            graphiql: true
-        }));
 
-        server.listen(port, () => console.log(`GraphQl listening on port ${port}/api`));
+        const server = new ApolloServer({
+            typeDefs,
+            resolvers
+        });
+
+        server.listen(port, () => console.log(`GraphQl listening on port ${port}${server.graphqlPath}`));
     }
 }
