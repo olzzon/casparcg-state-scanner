@@ -1,12 +1,15 @@
 const osc = require('osc');
-import { ApolloServer, gql } from 'apollo-server';
-
 const net = require('net');
-
+import { ApolloServer, gql, PubSub } from 'apollo-server';
 import {CasparCG} from 'casparcg-connection';
 
+//Setup PubSub:
+const pubsub = new PubSub();
+const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
 
-//Setup Interface:
+
+
+//Setup Data Structure Interface:
 var ccgNumberOfChannels = 4;
 var ccgNumberOfLayers = 30;
 var ccgDefaultLayer = 10;
@@ -86,6 +89,7 @@ export class App {
             console.log('CasparLogClient connected to: ' + host + ':' + port);
             ccgStatus.serverOnline = true;
         });
+        pubsub.publish(PUBSUB_SERVER_ONLINE, { serverOnline: ccgStatus.serverOnline});
     }
 
     /* For use if INFO becomes deprecated like en 2.2beta
@@ -215,11 +219,13 @@ export class App {
 
 
     setupGraphQlExpressServer() {
-
         const port = 5254;
 
         //Query schema for GraphQL:
         const typeDefs = gql `
+        type Subscription {
+            serverOnline: Boolean
+        },
         type Query {
             serverOnline: Boolean
             serverVersion: String
@@ -233,6 +239,12 @@ export class App {
 
         // GraphQL resolver
         const resolvers = {
+            Subscription: {
+                serverOnline: {
+                    // Additional event labels can be passed to asyncIterator creation
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_SERVER_ONLINE]),
+                },
+            },
             Query: {
                 allChannels: () => {
                     const ccgString = JSON.stringify(ccgChannel);
@@ -254,7 +266,6 @@ export class App {
                 }
             }
         };
-
         const server = new ApolloServer({
             typeDefs,
             resolvers
