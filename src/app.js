@@ -6,6 +6,7 @@ import {CasparCG} from 'casparcg-connection';
 //Setup PubSub:
 const pubsub = new PubSub();
 const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
+const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
 
 
 
@@ -73,13 +74,18 @@ export class App {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
             console.log('casparcg tcp log should be set to IP: ' + casparLogHost + " Port : " + casparLogPort);
+            ccgStatus.serverOnline = false;
             intervalConnect = setTimeout(() => this.connectLog(casparLogPort, casparLogHost, casparLogClient), 5000);
         });
 
         casparLogClient.on('data', (data) => {
-            console.log("New LOG line: ", data);
+            console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
                 this.updateAcmpData();
+                var channel = this.readLogChannel(data.toString(), "LOAD");
+                if ( channel > 0) {
+                    pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
+                }
             }
         });
     }
@@ -92,17 +98,17 @@ export class App {
         pubsub.publish(PUBSUB_SERVER_ONLINE, { serverOnline: ccgStatus.serverOnline});
     }
 
-    /* For use if INFO becomes deprecated like en 2.2beta
-    readCasparLog(data, commandName, varName) {
+
+    readLogChannel(data, commandName, varName) {
         var amcpCommand = data.substr(data.indexOf(commandName));
         var amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
         var amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
         var nameStart = amcpCommand.indexOf('"', 1);
         var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
-        ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
-        console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
+        //ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
+        //console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
+        return amcpChannel;
     }
-    */
 
     setupAcmpConnection() {
         this.ccgConnection = new CasparCG(
@@ -114,7 +120,6 @@ export class App {
         this.ccgConnection.connect();
         this.ccgConnection.version()
         .then((response) => {
-            ccgStatus.serverOnline = true;
             ccgStatus.version = response.response.data;
         });
     }
@@ -125,14 +130,11 @@ export class App {
             .then((response) => {
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = response.response.data.foreground.producer.filename;
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = response.response.data.background.producer.filename;
-                ccgStatus.serverOnline = true;
             })
             .catch((error) => {
-                ccgStatus.serverOnline = false;
                 console.log(error);
             });
         }
-
     }
 
 
@@ -225,6 +227,7 @@ export class App {
         const typeDefs = gql `
         type Subscription {
             serverOnline: Boolean
+            infoChannelUpdated: String
         },
         type Query {
             serverOnline: Boolean
@@ -244,6 +247,10 @@ export class App {
                     // Additional event labels can be passed to asyncIterator creation
                     subscribe: () => pubsub.asyncIterator([PUBSUB_SERVER_ONLINE]),
                 },
+                infoChannelUpdated: {
+                    // Additional event labels can be passed to asyncIterator creation
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED]),
+                }
             },
             Query: {
                 allChannels: () => {
