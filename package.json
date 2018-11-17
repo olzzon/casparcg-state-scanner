@@ -12,7 +12,8 @@
     "graphql": "^14.0.2",
     "http": "^0.0.0",
     "osc": "https://github.com/PieceMeta/osc.js/tarball/master",
-    "tslib": "^1.9.3"
+    "tslib": "^1.9.3",
+    "xml-js": "^1.6.8"
   },
   "scripts": {
     "build": "babel src -d dist",

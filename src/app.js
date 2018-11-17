@@ -1,5 +1,7 @@
 const osc = require('osc');
 const net = require('net');
+const fs = require('fs');
+var convert = require('xml-js');
 import { ApolloServer, gql, PubSub } from 'apollo-server';
 import {CasparCG} from 'casparcg-connection';
 
@@ -8,10 +10,21 @@ const pubsub = new PubSub();
 const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
 const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
 
+//Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
+var data = fs.readFileSync( 'casparcg.config');
+if (configFile === "") {
+    data = "<channel></channel>";
+}
+var configFile = convert.xml2js(data, {
+    nativeType: true,
+    ignoreComment: true,
+    alwaysChildren: true
+});
+console.log("casparcg.config file ->", configFile);
 
 
 //Setup Data Structure Interface:
-var ccgNumberOfChannels = 4;
+var ccgNumberOfChannels = configFile.configuration.channels.channel.length || 1;
 var ccgNumberOfLayers = 30;
 var ccgDefaultLayer = 10;
 var ccgStatus = {
