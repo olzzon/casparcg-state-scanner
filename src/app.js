@@ -146,11 +146,17 @@ export class App {
             .then((response) => {
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = response.response.data.foreground.producer.filename;
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = response.response.data.background.producer.filename;
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.path = response.response.data.foreground.producer.filename;
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.path = response.response.data.background.producer.filename;
             })
             .catch((error) => {
                 console.log(error);
             });
         }
+    }
+
+    extractFilenameFromPath(filename) {
+        return filename.replace(/^.*[\\\/]/, '');
     }
 
 
