@@ -16,9 +16,9 @@ if (configFile === "") {
     data = "<channel></channel>";
 }
 var configFile = convert.xml2js(data, {
-    nativeType: true,
     ignoreComment: true,
-    alwaysChildren: true
+    alwaysChildren: true,
+    compact: true
 });
 console.log("casparcg.config file ->", configFile);
 
@@ -199,8 +199,9 @@ export class App {
             if (message.address.includes('/stage/layer')) {
                 //Handle foreground messages:
                     if (message.address.includes('/file/path')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+
+                        //ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        //ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
                     }
                     if (message.address.includes('file/time')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
