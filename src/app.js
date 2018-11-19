@@ -8,7 +8,7 @@ import {CasparCG} from 'casparcg-connection';
 // Generics:
 const CCG_HOST = "localhost";
 const CCG_LOG_PORT = 3250;
-const CCG_AMCP_PORT = 5253;
+const CCG_AMCP_PORT = 5250;
 
 //Setup PubSub:
 const pubsub = new PubSub();
@@ -144,8 +144,8 @@ export class App {
         for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
             this.ccgConnection.info(channel,10)
             .then((response) => {
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = response.response.data.foreground.producer.filename;
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = response.response.data.background.producer.filename;
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.path = response.response.data.foreground.producer.filename;
                 ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.path = response.response.data.background.producer.filename;
             })
@@ -158,7 +158,6 @@ export class App {
     extractFilenameFromPath(filename) {
         return filename.replace(/^.*[\\\/]/, '');
     }
-
 
     timeoutPromise(ms, promise) {
         return new Promise((resolve, reject) => {
