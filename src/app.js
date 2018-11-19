@@ -5,6 +5,11 @@ var convert = require('xml-js');
 import { ApolloServer, gql, PubSub } from 'apollo-server';
 import {CasparCG} from 'casparcg-connection';
 
+// Generics:
+const CCG_HOST = "localhost";
+const CCG_LOG_PORT = 3250;
+const CCG_AMCP_PORT = 5253;
+
 //Setup PubSub:
 const pubsub = new PubSub();
 const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
@@ -76,19 +81,17 @@ export class App {
 
     setupCasparTcpLogServer() {
         //Setup TCP errorlog reciever:
-        const casparLogHost = "localhost";
-        const casparLogPort = 3250;
         const casparLogClient = new net.Socket();
         var intervalConnect;
 
-        this.connectLog(casparLogPort, casparLogHost, casparLogClient);
+        this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient);
 
         casparLogClient.on('error', (error) => {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
-            console.log('casparcg tcp log should be set to IP: ' + casparLogHost + " Port : " + casparLogPort);
+            console.log('casparcg tcp log should be set to IP: ' + CCG_HOST + " Port : " + CCG_LOG_PORT);
             ccgStatus.serverOnline = false;
-            intervalConnect = setTimeout(() => this.connectLog(casparLogPort, casparLogHost, casparLogClient), 5000);
+            intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
         });
 
         casparLogClient.on('data', (data) => {
@@ -126,8 +129,8 @@ export class App {
     setupAcmpConnection() {
         this.ccgConnection = new CasparCG(
             {
-            host: "localhost",
-            port: 5250,
+            host: CCG_HOST,
+            port: CCG_AMCP_PORT,
             autoConnect: false,
         });
         this.ccgConnection.connect();
