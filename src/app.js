@@ -3,7 +3,7 @@ const net = require('net');
 const fs = require('fs');
 var convert = require('xml-js');
 import { ApolloServer, gql, PubSub } from 'apollo-server';
-import {CasparCG} from 'casparcg-connection';
+import { CasparCG } from 'casparcg-connection';
 
 // Generics:
 const CCG_HOST = "localhost";
@@ -243,7 +243,7 @@ export class App {
 
 
     setupGraphQlExpressServer() {
-        const port = 5254;
+        const graphQlPort = 5254;
 
         //Query schema for GraphQL:
         const typeDefs = gql `
@@ -255,9 +255,30 @@ export class App {
             serverOnline: Boolean
             serverVersion: String
             allChannels: String
+            channels: [Channels]
             channel(ch: Int!): String
             layer(ch: Int!, l: Int!): String
             timeLeft(ch: Int!, l: Int!): String
+        },
+        type Channels {
+            layers: [Layers]
+        },
+        type Layers {
+            foreground: Foreground
+            background: Background
+        },
+        type Foreground {
+            name: String
+            path: String
+            length: Float
+            loop: Boolean
+            paused: Boolean
+        }
+        type Background {
+            name: String
+            path: String
+            length: Float
+            loop: Boolean
         }
         `;
 
@@ -275,6 +296,9 @@ export class App {
                 }
             },
             Query: {
+                channels: () => {
+                    return ccgChannel;
+                },
                 allChannels: () => {
                     const ccgString = JSON.stringify(ccgChannel);
                     return ccgString;
@@ -293,6 +317,26 @@ export class App {
                 serverOnline: () => {
                     return ccgStatus.serverOnline;
                 }
+            },
+            Channels: {
+                layers: (root) => root.layer
+            },
+            Layers: {
+                foreground: (root) => root.foreground,
+                background: (root) => root.background
+            },
+            Foreground: {
+                name: (root) => { return root.name; },
+                path: (root) => { return root.path; },
+                length: (root) => { return root.length; },
+                loop: (root) => { return root.loop; },
+                paused: (root) => { return root.paused; }
+            },
+            Background: {
+                name: (root) => { return root.name; },
+                path: (root) => { return root.path; },
+                length: (root) => { return root.length; },
+                loop: (root) => { return root.loop; }
             }
         };
         const server = new ApolloServer({
@@ -300,6 +344,6 @@ export class App {
             resolvers
         });
 
-        server.listen(port, () => console.log(`GraphQl listening on port ${port}${server.graphqlPath}`));
+        server.listen(graphQlPort, () => console.log(`GraphQl listening on port ${graphQlPort}${server.graphqlPath}`));
     }
 }
