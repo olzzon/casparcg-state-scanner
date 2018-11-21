@@ -57,7 +57,7 @@ var obj = {
         }
 };
 
-// Assign values to ccgChannel
+// Assign empty values to ccgChannel object
 var ch;
 var l;
 var layers = [];
@@ -83,7 +83,6 @@ export class App {
     setupCasparTcpLogServer() {
         //Setup TCP errorlog reciever:
         const casparLogClient = new net.Socket();
-        var intervalConnect;
 
         this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient);
 
@@ -208,11 +207,6 @@ export class App {
             var layerIndex = this.findLayerNumber(message.address)-1;
             if (message.address.includes('/stage/layer')) {
                 //Handle foreground messages:
-                    if (message.address.includes('/file/path')) {
-
-                        //ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-                        //ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                    }
                     if (message.address.includes('file/time')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
@@ -250,7 +244,6 @@ export class App {
         //Query schema for GraphQL:
         const typeDefs = gql `
         type Subscription {
-            serverOnline: Boolean
             infoChannelUpdated: String
             channels: [Channels]
         },
@@ -258,7 +251,6 @@ export class App {
             serverOnline: Boolean
             serverVersion: String
             channels: [Channels]
-            channel(ch: Int!): String
             layer(ch: Int!, l: Int!): String
             timeLeft(ch: Int!, l: Int!): String
         },
@@ -288,9 +280,6 @@ export class App {
         // GraphQL resolver
         const resolvers = {
             Subscription: {
-                serverOnline: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_SERVER_ONLINE])
-                },
                 infoChannelUpdated: {
                     subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED])
                 },
