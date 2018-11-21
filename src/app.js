@@ -14,6 +14,7 @@ const CCG_AMCP_PORT = 5250;
 const pubsub = new PubSub();
 const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
 const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
+const PUBSUB_CHANNELS_UPDATED = 'CHANNELS_UPDATED';
 
 //Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
 var data = fs.readFileSync( 'casparcg.config');
@@ -101,6 +102,7 @@ export class App {
                 var channel = this.readLogChannel(data.toString(), "LOAD");
                 if ( channel > 0) {
                     pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
+                    pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
                 }
             }
         });
@@ -250,11 +252,11 @@ export class App {
         type Subscription {
             serverOnline: Boolean
             infoChannelUpdated: String
+            channels: [Channels]
         },
         type Query {
             serverOnline: Boolean
             serverVersion: String
-            allChannels: String
             channels: [Channels]
             channel(ch: Int!): String
             layer(ch: Int!, l: Int!): String
@@ -287,21 +289,18 @@ export class App {
         const resolvers = {
             Subscription: {
                 serverOnline: {
-                    // Additional event labels can be passed to asyncIterator creation
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_SERVER_ONLINE]),
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_SERVER_ONLINE])
                 },
                 infoChannelUpdated: {
-                    // Additional event labels can be passed to asyncIterator creation
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED]),
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED])
+                },
+                channels: {
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED])
                 }
             },
             Query: {
                 channels: () => {
                     return ccgChannel;
-                },
-                allChannels: () => {
-                    const ccgString = JSON.stringify(ccgChannel);
-                    return ccgString;
                 },
                 channel: (obj, args, context, info) => {
                     const ccgChString = JSON.stringify(ccgChannel[args.ch-1]);
