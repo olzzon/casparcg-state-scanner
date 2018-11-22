@@ -91,18 +91,20 @@ export class App {
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
             console.log('casparcg tcp log should be set to IP: ' + CCG_HOST + " Port : " + CCG_LOG_PORT);
             ccgStatus.serverOnline = false;
-            intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
+            var intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
         });
 
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
-                this.updateAcmpData();
+                this.updateAcmpData()
+                .then(() => {
                 var channel = this.readLogChannel(data.toString(), "LOAD");
-                if ( channel > 0) {
-                    pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
-                    pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                }
+                    if ( channel > 0) {
+                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
+                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
+                    }
+                });
             }
         });
     }
@@ -142,18 +144,22 @@ export class App {
     }
 
     updateAcmpData() {
-        for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
-            this.ccgConnection.info(channel,10)
-            .then((response) => {
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.path = response.response.data.foreground.producer.filename;
-                ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.path = response.response.data.background.producer.filename;
-            })
-            .catch((error) => {
-                console.log(error);
-            });
-        }
+        return new Promise((resolve, reject) => {
+            for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
+                this.ccgConnection.info(channel,10)
+                .then((response) => {
+                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
+                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.path = response.response.data.foreground.producer.filename;
+                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.path = response.response.data.background.producer.filename;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    reject(false);
+                });
+            }
+            resolve(true);
+        });
     }
 
     extractFilenameFromPath(filename) {
@@ -290,10 +296,6 @@ export class App {
             Query: {
                 channels: () => {
                     return ccgChannel;
-                },
-                channel: (obj, args, context, info) => {
-                    const ccgChString = JSON.stringify(ccgChannel[args.ch-1]);
-                    return ccgChString;
                 },
                 layer: (obj, args, context, info) => {
                     const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
