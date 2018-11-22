@@ -9,6 +9,8 @@ import { CasparCG } from 'casparcg-connection';
 const CCG_HOST = "localhost";
 const CCG_LOG_PORT = 3250;
 const CCG_AMCP_PORT = 5250;
+const CCG_DEFAULT_LAYER = 10;
+const CCG_NUMBER_OF_LAYERS = 30;
 
 //Setup PubSub:
 const pubsub = new PubSub();
@@ -31,8 +33,6 @@ console.log("casparcg.config file ->", configFile);
 
 //Setup Data Structure Interface:
 var ccgNumberOfChannels = configFile.configuration.channels.channel.length || 1;
-var ccgNumberOfLayers = 30;
-var ccgDefaultLayer = 10;
 var ccgStatus = {
     serverOnline: false,
     serverVersion: ""
@@ -62,7 +62,7 @@ var ch;
 var l;
 var layers = [];
 for (ch=0; ch<ccgNumberOfChannels; ch++) {
-    for (l=0; l<ccgNumberOfLayers; l++) {
+    for (l=0; l<CCG_NUMBER_OF_LAYERS; l++) {
         layers[l] = JSON.parse(JSON.stringify(obj));
     }
     ccgChannel[ch] = ccgChannel[ch] = JSON.parse(JSON.stringify({ "layer" : layers }));
@@ -76,6 +76,7 @@ export class App {
         this.setupGraphQlExpressServer();
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
+        //TCP Log is used for triggering fetch of AMCP INFO
         this.setupAcmpConnection();
         this.setupCasparTcpLogServer();
     }
@@ -139,6 +140,7 @@ export class App {
         this.ccgConnection.connect();
         this.ccgConnection.version()
         .then((response) => {
+            console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
             ccgStatus.version = response.response.data;
         });
     }
@@ -146,12 +148,12 @@ export class App {
     updateAcmpData() {
         return new Promise((resolve, reject) => {
             for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
-                this.ccgConnection.info(channel,10)
+                this.ccgConnection.info(channel,CCG_DEFAULT_LAYER)
                 .then((response) => {
-                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
-                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].foreground.path = response.response.data.foreground.producer.filename;
-                    ccgChannel[channel-1].layer[ccgDefaultLayer-1].background.path = response.response.data.background.producer.filename;
+                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
+                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = response.response.data.foreground.producer.filename;
+                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = response.response.data.background.producer.filename;
                 })
                 .catch((error) => {
                     console.log(error);
