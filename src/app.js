@@ -94,18 +94,16 @@ export class App {
             ccgStatus.serverOnline = false;
             var intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
         });
-
-        var chunk = "";
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
-                this.updateAcmpData()
+                this.updateAcmpData(1)
                 .then(() => {
-//                var channel = this.readLogChannel(data.toString(), "LOAD");
-//                    if ( channel > 0) {
+                var channel = this.readLogChannel(data.toString(), "LOAD");
+                    if ( channel > 0) {
                         pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
                         pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-//                    }
+                    }
                 });
             }
         });
@@ -146,22 +144,27 @@ export class App {
         });
     }
 
-    updateAcmpData() {
+    updateAcmpData(channel) {
         return new Promise((resolve, reject) => {
-            for (let channel = 1; channel <= ccgNumberOfChannels; channel++) {
-                this.ccgConnection.info(channel,CCG_DEFAULT_LAYER)
-                .then((response) => {
-                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename);
-                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = response.response.data.foreground.producer.filename;
-                    ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = response.response.data.background.producer.filename;
-                })
-                .catch((error) => {
-                    console.log(error);
-                    reject(false);
-                });
+            if (channel > ccgNumberOfChannels) {
+                resolve(true);
             }
-            resolve(true);
+            this.ccgConnection.info(channel,CCG_DEFAULT_LAYER)
+            .then((response) => {
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename || "");
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = response.response.data.foreground.producer.filename;
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = response.response.data.background.producer.filename;
+
+                this.updateAcmpData(channel + 1)
+                .then(() => {
+                    resolve(true);
+                });
+            })
+            .catch((error) => {
+                console.log(error);
+                reject(false);
+            });
         });
     }
 
@@ -253,7 +256,6 @@ export class App {
         //Query schema for GraphQL:
         const typeDefs = gql `
         type Subscription {
-            infoChannelUpdated: String
             channels: [Channels]
         },
         type Query {
@@ -289,9 +291,6 @@ export class App {
         // GraphQL resolver
         const resolvers = {
             Subscription: {
-                infoChannelUpdated: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED])
-                },
                 channels: {
                     subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED])
                 }
