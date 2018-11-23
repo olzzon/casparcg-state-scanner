@@ -95,16 +95,17 @@ export class App {
             var intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
         });
 
+        var chunk = "";
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
                 this.updateAcmpData()
                 .then(() => {
-                var channel = this.readLogChannel(data.toString(), "LOAD");
-                    if ( channel > 0) {
+//                var channel = this.readLogChannel(data.toString(), "LOAD");
+//                    if ( channel > 0) {
                         pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
                         pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                    }
+//                    }
                 });
             }
         });
