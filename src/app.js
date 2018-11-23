@@ -154,8 +154,8 @@ export class App {
             .then((response) => {
                 ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
                 ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename || "");
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = response.response.data.foreground.producer.filename;
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = response.response.data.background.producer.filename;
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = this.cleanUpFilename(response.response.data.foreground.producer.filename);
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = this.cleanUpFilename(response.response.data.background.producer.filename || "");
 
                 this.updateAcmpData(channel + 1)
                 .then(() => {
@@ -171,6 +171,17 @@ export class App {
 
     extractFilenameFromPath(filename) {
         return filename.replace(/^.*[\\\/]/, '');
+    }
+
+
+    cleanUpFilename(filename) {
+        // casparcg-connection library bug: returns filename with media// or media/
+        return (filename.replace(/\\/g, '/')
+            .replace('media//', '')
+            .replace('media/', '')
+            .toUpperCase()
+            .replace(/\..+$/, '')
+        );
     }
 
     timeoutPromise(ms, promise) {

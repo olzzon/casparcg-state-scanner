@@ -1,25 +1,63 @@
 # CasparCG State Scanner
-App that handles OSC data from CasparCG Server, and deliver status as http request
+App that handles OSC data from CasparCG Server, and deliver status as graphQL queries and subscriptions.
 
-First draft of CasparCG-State-Scanner is now working. For now the only query is "allChannels".
 
-The number of channels and layers are specified in: 
+Defaults are specified in top of app.js, but should be ok if you run casparcg-state-scanner in your CCG server folder. 
 ```
-var ccgNumberOfChannels = 4;
-var ccgNumberOfLayers = 30;
+// Generics:
+const CCG_HOST = "localhost";
+const CCG_LOG_PORT = 3250;
+const CCG_AMCP_PORT = 5250;
+const CCG_DEFAULT_LAYER = 10;
+const CCG_NUMBER_OF_LAYERS = 30;
 ``` 
 
 ## Queries:
-### allChannels: 
-Returns a complete Channel - Layer datalist with status of CCG server
+
+### channels:
+Query channels:
 ```
-{ allChannels }
+query {
+  channels {
+    layers {
+      foreground {
+        name
+        path
+        length
+        loop
+        paused
+      }
+      background {
+        name
+        path
+        length
+        loop
+      }
+    }
+  }
+}
 ```
 
-### channel(ch: int):
-Returns all layers of channel
+Subscription of all layers of channels
 ```
-{ channel(ch: 1) }
+subscription {
+  channels {
+    layers {
+      foreground {
+        name
+        path
+        length
+        loop
+        paused
+      }
+      background {
+        name
+        path
+      }
+    }
+  }
+}
+
 ```
 
 ### layer(ch: int, l: int):
@@ -27,10 +65,21 @@ Returns selected layer of channel
 ```
 { layer(ch: 1, l: 10) }
 ```
-### timeLeft(ch: int, l: int):
+### Query timeLeft(ch: int, l: int):
 Returns countdown of channel, layer, file
+
 ```
 { timeLeft(ch: 1, l: 10) }
+```
+
+### Subscription timeLeft:
+Subscribe to array with timeLeft for all channels, default layer:
+```
+subscription {
+  timeLeft {
+    timeLeft
+  }
+}
 ```
 
 
@@ -39,23 +88,17 @@ Returns countdown of channel, layer, file
 yarn build
 yarn start
 ```
-After that open a browser:
-```
-http://localhost:5254/test
-```
-and try out queries
 
 ### For API calls from other programs use:
 ```
-http://xxx.xxx.xxx.xxx:5254/api
+http://xxx.xxx.xxx.xxx:5254/graphql
 ```
 
-##Build for Linux and Windows:
+### If you call it from a browser, you´ll get a Playground where you can test your queries and subscriptions. And see the data Schema
+
+## Build for Linux and Windows:
 ```
 yarn build
 yarn build-win
 yarn build-linux
 ```
-
-### ToDo:
-Queries so you can ask for e.g. time left of a single Channel-Layer
