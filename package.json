@@ -7,14 +7,13 @@
   "license": "MIT",
   "dependencies": {
     "@babel/cli": "^7.1.2",
+    "apollo-server": "^2.2.0",
     "casparcg-connection": "^4.5.3",
-    "express": "^4.16.4",
-    "express-graphql": "^0.6.12",
     "graphql": "^14.0.2",
     "http": "^0.0.0",
     "osc": "https://github.com/PieceMeta/osc.js/tarball/master",
-    "subscriptions-transport-ws": "^0.9.15",
-    "tslib": "^1.9.3"
+    "tslib": "^1.9.3",
+    "xml-js": "^1.6.8"
   },
   "scripts": {
     "build": "babel src -d dist",
