@@ -14,9 +14,9 @@ const CCG_NUMBER_OF_LAYERS = 30;
 
 //Setup PubSub:
 const pubsub = new PubSub();
-const PUBSUB_SERVER_ONLINE = 'SERVER_ONLINE';
 const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
 const PUBSUB_CHANNELS_UPDATED = 'CHANNELS_UPDATED';
+const PUBSUB_TIMELEFT_UPDATED = 'TIMELEFT_UPDATED';
 
 //Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
 var data = fs.readFileSync( 'casparcg.config');
@@ -42,8 +42,8 @@ var obj = {
         "foreground": {
             "name": "",
             "path": "",
-            "time": 0,
-            "length": 0,
+            "time": 0.0,
+            "length": 0.0,
             "loop": false,
             "paused": true
         },
@@ -79,6 +79,10 @@ export class App {
         //TCP Log is used for triggering fetch of AMCP INFO
         this.setupAcmpConnection();
         this.setupCasparTcpLogServer();
+        var timeLeftSubscription = setInterval(() => {
+            pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
+        },
+        40);
     }
 
     setupCasparTcpLogServer() {
@@ -114,7 +118,6 @@ export class App {
             console.log('CasparLogClient connected to: ' + host + ':' + port);
             ccgStatus.serverOnline = true;
         });
-        pubsub.publish(PUBSUB_SERVER_ONLINE, { serverOnline: ccgStatus.serverOnline});
     }
 
 
@@ -124,8 +127,6 @@ export class App {
         var amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
         var nameStart = amcpCommand.indexOf('"', 1);
         var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
-        //ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name = amcpCommand.substr(nameStart + 1, nameEnd - nameStart - 1);
-        //console.log(ccgChannel[amcpChannel-1].layer[amcpLayer-1][varName].name);
         return amcpChannel;
     }
 
@@ -257,6 +258,8 @@ export class App {
         const typeDefs = gql `
         type Subscription {
             channels: [Channels]
+            infoChannelUpdated: String
+            timeLeft: [Timeleft]
         },
         type Query {
             serverOnline: Boolean
@@ -285,6 +288,9 @@ export class App {
             length: Float
             loop: Boolean
         }
+        type Timeleft {
+            timeLeft: Float
+        }
         `;
 
 
@@ -293,6 +299,12 @@ export class App {
             Subscription: {
                 channels: {
                     subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED])
+                },
+                infoChannelUpdated: {
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED]),
+                },
+                timeLeft: {
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_TIMELEFT_UPDATED]),
                 }
             },
             Query: {
@@ -329,6 +341,11 @@ export class App {
                 path: (root) => { return root.path; },
                 length: (root) => { return root.length; },
                 loop: (root) => { return root.loop; }
+            },
+            Timeleft: {
+                timeLeft: (root) => {
+                    return root.layer[CCG_DEFAULT_LAYER-1].foreground.length - root.layer[CCG_DEFAULT_LAYER-1].foreground.time;
+                }
             }
         };
         const server = new ApolloServer({
