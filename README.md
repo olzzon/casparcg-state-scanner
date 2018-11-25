@@ -1,6 +1,9 @@
 # CasparCG State Scanner
 App that handles OSC data from CasparCG Server, and deliver status as graphQL queries and subscriptions.
-
+### A Simple React example is here:
+```
+https://github.com/olzzon/casparcg-state-scanner-example
+```
 
 Defaults are specified in top of app.js, but should be ok if you run casparcg-state-scanner in your CCG server folder. 
 ```
