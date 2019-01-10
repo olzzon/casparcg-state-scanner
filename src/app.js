@@ -2,7 +2,7 @@ const osc = require('osc');
 const net = require('net');
 const fs = require('fs');
 var convert = require('xml-js');
-import { ApolloServer, gql, PubSub } from 'apollo-server';
+import { ApolloServer, gql, PubSub, withFilter } from 'apollo-server';
 import { CasparCG } from 'casparcg-connection';
 
 // Generics:
@@ -16,6 +16,7 @@ const CCG_NUMBER_OF_LAYERS = 30;
 const pubsub = new PubSub();
 const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
 const PUBSUB_CHANNELS_UPDATED = 'CHANNELS_UPDATED';
+const PUBSUB_PLAY_LAYER_UPDATED = 'PLAY_LAYER';
 const PUBSUB_TIMELEFT_UPDATED = 'TIMELEFT_UPDATED';
 
 //Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
@@ -86,6 +87,7 @@ export class App {
     }
 
     setupCasparTcpLogServer() {
+
         //Setup TCP errorlog reciever:
         const casparLogClient = new net.Socket();
 
@@ -105,12 +107,21 @@ export class App {
                 .then(() => {
                 var channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
+                        var ccgPlayLayer = [];
+                        for (var i=0; i<ccgNumberOfChannels; i++) {
+                            ccgPlayLayer.push({ "layer" : [] });
+                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+                        }
+                        console.log("Layer10:",ccgPlayLayer);
+
+                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
                         pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
                         pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
                     }
                 });
             }
         });
+
     }
 
     connectLog(port, host, client) {
@@ -119,7 +130,6 @@ export class App {
             ccgStatus.serverOnline = true;
         });
     }
-
 
     readLogChannel(data, commandName, varName) {
         var amcpCommand = data.substr(data.indexOf(commandName));
@@ -231,6 +241,21 @@ export class App {
             var layerIndex = this.findLayerNumber(message.address)-1;
             if (message.address.includes('/stage/layer')) {
                 //Handle foreground messages:
+                    if (message.address.includes('file/path')) {
+                        if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
+                            ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                            ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                            var ccgPlayLayer = [];
+                            for (var i=0; i<ccgNumberOfChannels; i++) {
+                                ccgPlayLayer.push({ "layer" : [] });
+                                ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+                            }
+                            console.log("OSC FILENAME:", message.args[0]);
+                            pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+                            pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+                            pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
+                        }
+                    }
                     if (message.address.includes('file/time')) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
@@ -269,6 +294,7 @@ export class App {
         const typeDefs = gql `
         type Subscription {
             channels: [Channels]
+            playLayer : [Channels]
             infoChannelUpdated: String
             timeLeft: [Timeleft]
         },
@@ -309,7 +335,10 @@ export class App {
         const resolvers = {
             Subscription: {
                 channels: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED])
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED]),
+                },
+                playLayer: {
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_PLAY_LAYER_UPDATED]),
                 },
                 infoChannelUpdated: {
                     subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED]),

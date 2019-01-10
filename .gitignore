@@ -9,6 +9,7 @@ release-builds/
 dist/
 node_modules/
 *.compiled.*
+log/
 
 # Folder config file #
 ######################
