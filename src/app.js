@@ -1,6 +1,8 @@
 const osc = require('osc');
 const net = require('net');
 const fs = require('fs');
+const chokidar = require('chokidar');
+
 var convert = require('xml-js');
 import { ApolloServer, gql, PubSub, withFilter } from 'apollo-server';
 import { CasparCG } from 'casparcg-connection';
@@ -18,6 +20,7 @@ const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
 const PUBSUB_CHANNELS_UPDATED = 'CHANNELS_UPDATED';
 const PUBSUB_PLAY_LAYER_UPDATED = 'PLAY_LAYER';
 const PUBSUB_TIMELEFT_UPDATED = 'TIMELEFT_UPDATED';
+const PUBSUB_MEDIA_FILE_CHANGED = 'MEDIA_FILE_CHANGED';
 
 //Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
 var data = fs.readFileSync( 'casparcg.config');
@@ -75,11 +78,13 @@ export class App {
         this.connectLog = this.connectLog.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
+        this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
         this.setupAcmpConnection();
         this.setupCasparTcpLogServer();
+
         var timeLeftSubscription = setInterval(() => {
             pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
         },
@@ -138,6 +143,23 @@ export class App {
         var nameStart = amcpCommand.indexOf('"', 1);
         var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
         return amcpChannel;
+    }
+
+    //Follow media directories and pubsub if changes occour:
+    fileWatchSetup(folder) {
+        chokidar.watch(folder,
+            {ignored: /(^|[\/\\])\../})
+            .on('all', (event, path) => {
+                pubsub.publish(PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
+                console.log("File/Folder Changes :" ,event, path);
+            })
+            .on('ready', (event, path) => {
+                console.log("File/Folder Watch Ready :" ,event, path);
+            })
+            .on('error', (event,path) => {
+                console.log("File/Foler Watch Error:",event, path);
+            })
+            ;
     }
 
     setupAcmpConnection() {
@@ -286,7 +308,6 @@ export class App {
         return channel;
     }
 
-
     setupGraphQlExpressServer() {
         const graphQlPort = 5254;
 
@@ -297,6 +318,7 @@ export class App {
             playLayer : [Channels]
             infoChannelUpdated: String
             timeLeft: [Timeleft]
+            mediaFilesChanged: Boolean
         },
         type Query {
             serverOnline: Boolean
@@ -345,7 +367,11 @@ export class App {
                 },
                 timeLeft: {
                     subscribe: () => pubsub.asyncIterator([PUBSUB_TIMELEFT_UPDATED]),
+                },
+                mediaFilesChanged: {
+                    subscribe: () => pubsub.asyncIterator([PUBSUB_MEDIA_FILE_CHANGED]),
                 }
+
             },
             Query: {
                 channels: () => {
