@@ -9,6 +9,7 @@
     "@babel/cli": "^7.1.2",
     "apollo-server": "^2.2.0",
     "casparcg-connection": "^4.5.3",
+    "chokidar": "^2.0.4",
     "graphql": "^14.0.2",
     "http": "^0.0.0",
     "osc": "https://github.com/PieceMeta/osc.js/tarball/master",

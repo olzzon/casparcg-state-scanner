@@ -9,6 +9,10 @@ release-builds/
 dist/
 node_modules/
 *.compiled.*
+casparcg.config
+media/
+log/
+testlog
 
 # Folder config file #
 ######################

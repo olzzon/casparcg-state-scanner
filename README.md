@@ -41,7 +41,7 @@ query {
 }
 ```
 
-Subscription of all layers of channels
+## Subscription of all layers of channels
 ```
 subscription {
   channels {
@@ -62,6 +62,31 @@ subscription {
 }
 
 ```
+
+## Subscrition of PlayerLayer:
+(default layer 10)
+
+```
+subscription {
+  playerLayer {
+    layers {
+      foreground {
+        name
+        path
+        length
+        loop
+        paused
+      }
+      background {
+        name
+        path
+      }
+    }
+  }
+}
+
+```
+
 
 ### layer(ch: int, l: int):
 Returns selected layer of channel
@@ -84,6 +109,18 @@ subscription {
   }
 }
 ```
+
+### Subscription Media Foler Updated:
+
+Subscribe to a media folder wathcer on the CCG server, so you get a "TRUE" when files are updated or changed.
+
+```
+subscription {
+  mediaFilesChanged
+}
+```
+
+
 
 
 ## Start:
