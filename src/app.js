@@ -74,11 +74,10 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 
 export class App {
     constructor() {
-        this.playing = false;
         this.connectLog = this.connectLog.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
-        this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
+        this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
@@ -150,17 +149,20 @@ export class App {
         chokidar.watch(folder,
             {ignored: /(^|[\/\\])\../})
             .on('all', (event, path) => {
-                pubsub.publish(PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
-                console.log("File/Folder Changes :" ,event, path);
+                setTimeout(() => {
+                    pubsub.publish(PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
+                    console.log("File/Folder Changes :" ,event, path);
+                }, 10);
             })
             .on('ready', (event, path) => {
-                console.log("File/Folder Watch Ready :" ,event, path);
+                console.log("File/Folder Watch Ready ");
             })
             .on('error', (event,path) => {
                 console.log("File/Foler Watch Error:",event, path);
             })
             ;
     }
+
 
     setupAcmpConnection() {
         this.ccgConnection = new CasparCG(
@@ -349,6 +351,7 @@ export class App {
         }
         type Timeleft {
             timeLeft: Float
+            time: Float
         }
         `;
 
@@ -411,7 +414,8 @@ export class App {
             Timeleft: {
                 timeLeft: (root) => {
                     return root.layer[CCG_DEFAULT_LAYER-1].foreground.length - root.layer[CCG_DEFAULT_LAYER-1].foreground.time;
-                }
+                },
+                time: (root) => { return root.layer[CCG_DEFAULT_LAYER-1].foreground.time; }
             }
         };
         const server = new ApolloServer({
