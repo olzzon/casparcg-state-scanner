@@ -190,10 +190,10 @@ export class App {
             }
             this.ccgConnection.info(channel,CCG_DEFAULT_LAYER)
             .then((response) => {
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = this.extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = this.extractFilenameFromPath(response.response.data.background.producer.filename || "");
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = this.cleanUpFilename(response.response.data.foreground.producer.filename);
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = this.cleanUpFilename(response.response.data.background.producer.filename || "");
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = extractFilenameFromPath(response.response.data.background.producer.filename || "");
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
+                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
 
                 this.updateAcmpData(channel + 1)
                 .then(() => {
@@ -250,8 +250,8 @@ export class App {
         });
 
         oscConnection.on('message', (message) => {
-            var channelIndex = this.findChannelNumber(message.address)-1;
-            var layerIndex = this.findLayerNumber(message.address)-1;
+            var channelIndex = findChannelNumber(message.address)-1;
+            var layerIndex = findLayerNumber(message.address)-1;
             if (message.address.includes('/stage/layer')) {
                 //Handle foreground messages:
                     if (message.address.includes('file/path')) {
