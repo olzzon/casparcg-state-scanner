@@ -4,8 +4,12 @@ const fs = require('fs');
 const chokidar = require('chokidar');
 
 var convert = require('xml-js');
-import { ApolloServer, gql, PubSub, withFilter } from 'apollo-server';
+import { ApolloServer, gql, PubSub } from 'apollo-server';
 import { CasparCG } from 'casparcg-connection';
+
+//Utils:
+import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
+import {findLayerNumber, findChannelNumber} from './utils/oscStringHandling';
 
 // Generics:
 const CCG_HOST = "localhost";
@@ -203,21 +207,6 @@ export class App {
         });
     }
 
-    extractFilenameFromPath(filename) {
-        return filename.replace(/^.*[\\\/]/, '');
-    }
-
-
-    cleanUpFilename(filename) {
-        // casparcg-connection library bug: returns filename with media// or media/
-        return (filename.replace(/\\/g, '/')
-            .replace('media//', '')
-            .replace('media/', '')
-            .toUpperCase()
-            .replace(/\..+$/, '')
-        );
-    }
-
     timeoutPromise(ms, promise) {
         return new Promise((resolve, reject) => {
         setTimeout(() => {
@@ -296,18 +285,6 @@ export class App {
         oscConnection.open();
         console.log(`OSC listening on port 5253`);
 
-    }
-
-    findChannelNumber(string) {
-        var channel = string.replace("/channel/", "");
-        channel = channel.slice(0, (channel.indexOf("/")));
-        return channel;
-    }
-
-    findLayerNumber(string) {
-        var channel = string.slice(string.indexOf('layer/')+6);
-        channel = channel.slice(0, (channel.indexOf("/")));
-        return channel;
     }
 
     setupGraphQlExpressServer() {
