@@ -273,8 +273,7 @@ export class App {
                         }
                     }
                     if (message.address.includes('background/file/path')) {
-                        if (ccgChannel[channelIndex].layer[layerIndex].background.name != message.args[0]) {
-                            ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
+                        if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
                             ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
 
                             // To be replaces with a .map of layer 9 in the pubsub play player updated
