@@ -86,8 +86,9 @@ export class App {
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
         this.setupAcmpConnection();
-        this.setupCasparTcpLogServer();
-
+        if (ccgStatus.version < "2.2") {
+            this.setupCasparTcpLogServer();
+        }
         var timeLeftSubscription = setInterval(() => {
             pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
         },
@@ -178,7 +179,7 @@ export class App {
         this.ccgConnection.version()
         .then((response) => {
             console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
-            console.log("CasparCG Server Version :", response);
+            console.log("CasparCG Server Version :", response.response.data);
             ccgStatus.version = response.response.data;
         });
     }
