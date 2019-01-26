@@ -178,6 +178,7 @@ export class App {
         this.ccgConnection.version()
         .then((response) => {
             console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
+            console.log("CasparCG Server Version :", response);
             ccgStatus.version = response.response.data;
         });
     }
