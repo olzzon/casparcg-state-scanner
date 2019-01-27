@@ -88,9 +88,9 @@ export class App {
         if (ccgStatus.version < "2.2") {
             this.setupAcmpConnection();
             this.setupCasparTcpLogServer();
-            this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
-        } else {
             this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
+        } else {
+            this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
         }
 
         var timeLeftSubscription = setInterval(() => {
@@ -238,6 +238,7 @@ export class App {
 
         oscConnection.on("ready", function () {
             let ipAddresses = getIPAddresses();
+            //ToDo: serveronline is allways true on CCG 2.2
             ccgStatus.serverOnline = true;
             console.log("Listening for OSC over UDP.");
             ipAddresses.forEach(function (address) {
