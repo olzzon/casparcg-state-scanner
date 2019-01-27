@@ -85,8 +85,8 @@ export class App {
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
-        this.setupAcmpConnection();
         if (ccgStatus.version < "2.2") {
+            this.setupAcmpConnection();
             this.setupCasparTcpLogServer();
         }
         var timeLeftSubscription = setInterval(() => {
@@ -256,53 +256,66 @@ export class App {
             let ccgPlayLayer = [];
 
             if (message.address.includes('/stage/layer')) {
-                //Handle foreground messages:
-                    if (message.address.includes('foreground/file/path')) {
-                        if (ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
-                            ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-
-                            // To be replaces with a .map of layer 9 in the pubsub play player updated
-                            for (let i=0; i<ccgNumberOfChannels; i++) {
-                                ccgPlayLayer.push({ "layer" : [] });
-                                ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                            }
-                            console.log("OSC FILENAME:", message.args[0]);
-                            pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                            pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-                            pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                        }
-                    }
-                    if (message.address.includes('background/file/path')) {
-                        if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
-                            ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
-
-                            // To be replaces with a .map of layer 9 in the pubsub play player updated
-                            for (let i=0; i<ccgNumberOfChannels; i++) {
-                                ccgPlayLayer.push({ "layer" : [] });
-                                ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                            }
-                            console.log("OSC FILENAME:", message.args[0]);
-                            pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                            pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-                            pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                        }
-                    }
-                    if (message.address.includes('foreground/file/name')) {
+                //CCG 2.1 Handle OSC /file/path:
+                if (message.address.includes('file/path') && ccgStatus.version < "2.2") {
+                    if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                        for (let i=0; i<ccgNumberOfChannels; i++) {
+                            ccgPlayLayer.push({ "layer" : [] });
+                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+                        }
+                        console.log("OSC FILENAME:", message.args[0]);
+                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
                     }
-                    if (message.address.includes('background/file/name')) {
-                        ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
+                }
+                //CCG 2.2 Handle OSC /file/path:
+                if (message.address.includes('foreground/file/path')) {
+                    if (ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
+                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+
+                        // To be replaces with a .map of layer 9 in the pubsub play player updated
+                        for (let i=0; i<ccgNumberOfChannels; i++) {
+                            ccgPlayLayer.push({ "layer" : [] });
+                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+                        }
+                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
                     }
-                    if (message.address.includes('file/time')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
+                }
+                if (message.address.includes('background/file/path')) {
+                    if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
+                        ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
+
+                        // To be replaces with a .map of layer 9 in the pubsub play player updated
+                        for (let i=0; i<ccgNumberOfChannels; i++) {
+                            ccgPlayLayer.push({ "layer" : [] });
+                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+                        }
+                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
                     }
-                    if (message.address.includes('loop')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
-                    }
-                    if (message.address.includes('/paused')) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
-                    }
+                }
+                if (message.address.includes('foreground/file/name')) {
+                    ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                }
+                if (message.address.includes('background/file/name')) {
+                    ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
+                }
+                if (message.address.includes('file/time')) {
+                    ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                    ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
+                }
+                if (message.address.includes('loop')) {
+                    ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
+                }
+                if (message.address.includes('/paused')) {
+                    ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+                }
             }
         });
 
