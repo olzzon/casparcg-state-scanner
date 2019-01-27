@@ -82,14 +82,17 @@ export class App {
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
-        this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
         if (ccgStatus.version < "2.2") {
             this.setupAcmpConnection();
             this.setupCasparTcpLogServer();
+            this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
+        } else {
+            this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
         }
+
         var timeLeftSubscription = setInterval(() => {
             pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
         },
@@ -301,7 +304,6 @@ export class App {
             ccgPlayLayer.push({ "layer" : [] });
             ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
         }
-        console.log("OSC FILENAME:", message.args[0]);
         pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
         pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
         pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
