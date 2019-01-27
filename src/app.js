@@ -237,8 +237,8 @@ export class App {
         });
 
         oscConnection.on("ready", function () {
-            var ipAddresses = getIPAddresses();
-
+            let ipAddresses = getIPAddresses();
+            ccgStatus.serverOnline = true;
             console.log("Listening for OSC over UDP.");
             ipAddresses.forEach(function (address) {
                 console.log(" Host:", address + ", Port:", oscConnection.options.localPort);
