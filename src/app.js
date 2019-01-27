@@ -79,7 +79,6 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.connectLog = this.connectLog.bind(this);
-        this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
         this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
