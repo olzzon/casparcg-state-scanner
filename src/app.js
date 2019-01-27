@@ -79,6 +79,7 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.connectLog = this.connectLog.bind(this);
+        this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
         this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
@@ -116,7 +117,7 @@ export class App {
                 .then(() => {
                 var channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
-                        this.pulishInfoUpdate();
+                        this.pulishInfoUpdate(channel);
                     }
                 });
             }
@@ -244,7 +245,6 @@ export class App {
         oscConnection.on('message', (message) => {
             let channelIndex = findChannelNumber(message.address)-1;
             let layerIndex = findLayerNumber(message.address)-1;
-            let ccgPlayLayer = [];
 
             if (message.address.includes('/stage/layer')) {
                 //CCG 2.1 Handle OSC /file/path:
@@ -252,20 +252,22 @@ export class App {
                     if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        this.pulishInfoUpdate();                    }
+                        this.pulishInfoUpdate(channelIndex);
+                    }
                 }
                 //CCG 2.2 Handle OSC /file/path:
                 if (message.address.includes('foreground/file/path')) {
                     if (ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
 
-                        this.pulishInfoUpdate();                    }
+                        this.pulishInfoUpdate(channelIndex);
+                    }
                 }
                 if (message.address.includes('background/file/path')) {
                     if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
 
-                        this.pulishInfoUpdate();
+                        this.pulishInfoUpdate(channelIndex);
                     }
                 }
                 if (message.address.includes('foreground/file/name')) {
@@ -292,7 +294,9 @@ export class App {
 
     }
 
-    pulishInfoUpdate() {
+    pulishInfoUpdate(channelIndex) {
+        let ccgPlayLayer = [];
+
         for (let i=0; i<ccgNumberOfChannels; i++) {
             ccgPlayLayer.push({ "layer" : [] });
             ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
