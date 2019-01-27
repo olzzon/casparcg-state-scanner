@@ -79,6 +79,7 @@ for (ch=0; ch<ccgNumberOfChannels; ch++) {
 export class App {
     constructor() {
         this.connectLog = this.connectLog.bind(this);
+        this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
         this.setupOscServer();
         this.setupGraphQlExpressServer();
         this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
@@ -116,16 +117,7 @@ export class App {
                 .then(() => {
                 var channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
-                        var ccgPlayLayer = [];
-                        for (var i=0; i<ccgNumberOfChannels; i++) {
-                            ccgPlayLayer.push({ "layer" : [] });
-                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                        }
-                        console.log("Layer10:",ccgPlayLayer);
-
-                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channel });
-                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
+                        this.pulishInfoUpdate();
                     }
                 });
             }
@@ -261,43 +253,20 @@ export class App {
                     if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        for (let i=0; i<ccgNumberOfChannels; i++) {
-                            ccgPlayLayer.push({ "layer" : [] });
-                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                        }
-                        console.log("OSC FILENAME:", message.args[0]);
-                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                    }
+                        this.pulishInfoUpdate();                    }
                 }
                 //CCG 2.2 Handle OSC /file/path:
                 if (message.address.includes('foreground/file/path')) {
                     if (ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
 
-                        // To be replaces with a .map of layer 9 in the pubsub play player updated
-                        for (let i=0; i<ccgNumberOfChannels; i++) {
-                            ccgPlayLayer.push({ "layer" : [] });
-                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                        }
-                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
-                    }
+                        this.pulishInfoUpdate();                    }
                 }
                 if (message.address.includes('background/file/path')) {
                     if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
 
-                        // To be replaces with a .map of layer 9 in the pubsub play player updated
-                        for (let i=0; i<ccgNumberOfChannels; i++) {
-                            ccgPlayLayer.push({ "layer" : [] });
-                            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
-                        }
-                        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-                        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-                        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
+                        this.pulishInfoUpdate();
                     }
                 }
                 if (message.address.includes('foreground/file/name')) {
@@ -322,6 +291,17 @@ export class App {
         oscConnection.open();
         console.log(`OSC listening on port 5253`);
 
+    }
+
+    pulishInfoUpdate() {
+        for (let i=0; i<ccgNumberOfChannels; i++) {
+            ccgPlayLayer.push({ "layer" : [] });
+            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+        }
+        console.log("OSC FILENAME:", message.args[0]);
+        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
     }
 
     setupGraphQlExpressServer() {
