@@ -3,6 +3,7 @@ const net = require('net');
 const fs = require('fs');
 const chokidar = require('chokidar');
 const convert = require('xml-js');
+const os = require("os");
 
 import { ApolloServer, PubSub } from 'apollo-server';
 import { CasparCG } from 'casparcg-connection';
@@ -35,6 +36,8 @@ export class App {
 
         //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
         this.setupAcmpConnection();
+
+        //Check CCG Version and initialise OSC server:
         this.ccgConnection.version()
         .then((response) => {
             console.log("ACMP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
@@ -49,6 +52,7 @@ export class App {
                 //ToDo: serveronline is allways true on CCG 2.2
                 this.serverOnline = true;
             }
+            //OSC server will not recieve data before a CCG connection is established:
             this.setupOscServer();
         });
 
@@ -101,35 +105,33 @@ export class App {
             ;
     }
 
-    setupOscServer() {
-        var getIPAddresses = function () {
-            var os = require("os"),
-                interfaces = os.networkInterfaces(),
-                ipAddresses = [];
-
-            for (var deviceName in interfaces) {
-                var addresses = interfaces[deviceName];
-                for (var i = 0; i < addresses.length; i++) {
-                    var addressInfo = addresses[i];
-                    if (addressInfo.family === "IPv4" && !addressInfo.internal) {
-                        ipAddresses.push(addressInfo.address);
-                    }
+    getThisMachineIpaddresses() {
+        interfaces = os.networkInterfaces();
+        ipAddresses = [];
+        for (let deviceName in interfaces) {
+            let addresses = interfaces[deviceName];
+            for (let i = 0; i < addresses.length; i++) {
+                let addressInfo = addresses[i];
+                if (addressInfo.family === "IPv4" && !addressInfo.internal) {
+                    ipAddresses.push(addressInfo.address);
                 }
             }
+        }
+        return ipAddresses;
+    }
 
-            return ipAddresses;
-        };
+    setupOscServer() {
         const oscConnection = new osc.UDPPort({
-            localAddress: "0.0.0.0",
+            localAddress: "localhost",
             localPort: Globals.DEFAULT_OSC_PORT
         });
 
         oscConnection.on("ready", function () {
-            let ipAddresses = getIPAddresses();
+            let ipAddresses = this.getThisMachineIpaddresses();
 
             console.log("Listening for OSC over UDP.");
             ipAddresses.forEach(function (address) {
-                console.log(" Host:", address + ", Port:", oscConnection.options.localPort);
+                console.log("OSC Host:", address + ", Port:", oscConnection.options.localPort);
             });
         });
 
