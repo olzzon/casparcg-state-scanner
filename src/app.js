@@ -80,7 +80,6 @@ export class App {
     constructor() {
         this.connectLog = this.connectLog.bind(this);
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
-        this.setupOscServer();
         this.setupGraphQlExpressServer();
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
@@ -90,13 +89,14 @@ export class App {
         .then((response) => {
             console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
             console.log("CasparCG Server Version :", response.response.data);
-            ccgStatus.version = response.response.data;
+            ccgStatus.serverVersion = response.response.data;
             if (ccgStatus.serverVersion < "2.2") {
                 this.setupCasparTcpLogServer();
                 this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
             } else {
                 this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
             }
+            this.setupOscServer();
         });
         var timeLeftSubscription = setInterval(() => {
             pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
