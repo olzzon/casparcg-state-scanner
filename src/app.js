@@ -106,8 +106,8 @@ export class App {
     }
 
     getThisMachineIpAddresses() {
-        interfaces = os.networkInterfaces();
-        ipAddresses = [];
+        let interfaces = os.networkInterfaces();
+        let ipAddresses = [];
         for (let deviceName in interfaces) {
             let addresses = interfaces[deviceName];
             for (let i = 0; i < addresses.length; i++) {
