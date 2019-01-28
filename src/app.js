@@ -1,12 +1,13 @@
-const osc = require('osc');
-const net = require('net');
-const fs = require('fs');
-const chokidar = require('chokidar');
-const convert = require('xml-js');
-const os = require("os");
+//System:
+import net from 'net';
+import fs from 'fs';
+import os from 'os';
 
-import { ApolloServer, PubSub } from 'apollo-server';
+//Modules:
 import { CasparCG } from 'casparcg-connection';
+import osc from 'osc';
+import convert from 'xml-js';
+import chokidar from 'chokidar';
 
 //Utils:
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
@@ -15,6 +16,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import * as Globals from './utils/CONSTANTS';
 
 //GraphQl:
+import { ApolloServer, PubSub } from 'apollo-server';
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
 //PubSub:
@@ -57,7 +59,7 @@ export class App {
         });
 
         //Update of timeleft is set to a default 40ms (same as 25FPS)
-        var timeLeftSubscription = setInterval(() => {
+        const timeLeftSubscription = setInterval(() => {
             pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
         },
         40);
@@ -318,14 +320,14 @@ export class App {
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
             console.log('casparcg tcp log should be set to IP: ' + Globals.CCG_HOST + " Port : " + Globals.CCG_LOG_PORT);
             this.serverOnline = false;
-            var intervalConnect = setTimeout(() => this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient), 5000);
+            let intervalConnect = setTimeout(() => this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
                 this.updateAcmpData(1)
                 .then(() => {
-                var channel = this.readLogChannel(data.toString(), "LOAD");
+                let channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
                         this.pulishInfoUpdate(channel);
                     }
@@ -343,11 +345,11 @@ export class App {
     }
 
     readLogChannel(data, commandName, varName) {
-        var amcpCommand = data.substr(data.indexOf(commandName));
-        var amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
-        var amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
-        var nameStart = amcpCommand.indexOf('"', 1);
-        var nameEnd = amcpCommand.indexOf('"', nameStart + 1);
+        let amcpCommand = data.substr(data.indexOf(commandName));
+        let amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
+        let amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));
+        let nameStart = amcpCommand.indexOf('"', 1);
+        let nameEnd = amcpCommand.indexOf('"', nameStart + 1);
         return amcpChannel;
     }
 
