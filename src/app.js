@@ -86,10 +86,6 @@ export class App {
         });
     }
 
-    setupAcmpConnection() {
-
-    }
-
     //Follow media directories and pubsub if changes occour:
     fileWatchSetup(folder) {
         chokidar.watch(folder,
