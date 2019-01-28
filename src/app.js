@@ -190,7 +190,7 @@ export class App {
 
         for (let i=0; i<this.ccgNumberOfChannels; i++) {
             ccgPlayLayer.push({ "layer" : [] });
-            ccgPlayLayer[i].layer.push(this.ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+            ccgPlayLayer[i].layer.push(this.ccgChannel[i].layer[Globals.CCG_DEFAULT_LAYER-1]);
         }
         pubsub.publish(Globals.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
         pubsub.publish(Globals.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
