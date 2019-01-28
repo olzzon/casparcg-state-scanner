@@ -28,16 +28,23 @@ export class App {
         this.connectLog = this.connectLog.bind(this);
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
 
+        //Setup AMCP Connection:
+        this.ccgConnection = new CasparCG(
+            {
+                host: Globals.CCG_HOST,
+                port: Globals.CCG_AMCP_PORT,
+                autoConnect: true,
+            }
+        );
+
+        //Define vars:
         this.configFile = this.readCasparCgConfigFile();
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
         this.serverOnline = false;
-        this.serverVersion = "";
 
+        //Setup GraphQL:
         this.setupGraphQlServer();
-
-        //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
-        this.setupAcmpConnection();
 
         //Check CCG Version and initialise OSC server:
         this.ccgConnection.version()
@@ -47,6 +54,7 @@ export class App {
             this.serverVersion = response.response.data;
 
             if (this.serverVersion < "2.2") {
+                //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
                 this.setupCasparTcpLogServer();
                 this.fileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text);
             } else {
@@ -67,7 +75,7 @@ export class App {
 
     readCasparCgConfigFile() {
         //Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
-        let data = fs.readFileSync( 'casparcg.config');
+        let data = fs.readFileSync('casparcg.config');
         if (data === "") {
             data = "<channel></channel>";
         }
@@ -79,13 +87,7 @@ export class App {
     }
 
     setupAcmpConnection() {
-        this.ccgConnection = new CasparCG(
-            {
-            host: Globals.CCG_HOST,
-            port: Globals.CCG_AMCP_PORT,
-            autoConnect: false,
-        });
-        this.ccgConnection.connect();
+
     }
 
     //Follow media directories and pubsub if changes occour:
