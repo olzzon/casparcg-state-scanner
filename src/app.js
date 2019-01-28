@@ -26,7 +26,7 @@ const PUBSUB_PLAY_LAYER_UPDATED = 'PLAY_LAYER';
 const PUBSUB_TIMELEFT_UPDATED = 'TIMELEFT_UPDATED';
 const PUBSUB_MEDIA_FILE_CHANGED = 'MEDIA_FILE_CHANGED';
 
-//Read casparcg settingsfile (place a copy of it in this folder if not installed in server folder)
+//Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
 var data = fs.readFileSync( 'casparcg.config');
 if (configFile === "") {
     data = "<channel></channel>";
@@ -85,14 +85,19 @@ export class App {
 
         //ACMP connection is neccesary, as OSC for now, does not recieve info regarding non-playing files.
         //TCP Log is used for triggering fetch of AMCP INFO
-        if (ccgStatus.version < "2.2") {
-            this.setupAcmpConnection();
-            this.setupCasparTcpLogServer();
-            this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
-        } else {
-            this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
-        }
-
+        this.setupAcmpConnection();
+        this.ccgConnection.version()
+        .then((response) => {
+            console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
+            console.log("CasparCG Server Version :", response.response.data);
+            ccgStatus.version = response.response.data;
+            if (ccgStatus.serverVersion < "2.2") {
+                this.setupCasparTcpLogServer();
+                this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
+            } else {
+                this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
+            }
+        });
         var timeLeftSubscription = setInterval(() => {
             pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
         },
@@ -171,12 +176,6 @@ export class App {
             autoConnect: false,
         });
         this.ccgConnection.connect();
-        this.ccgConnection.version()
-        .then((response) => {
-            console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
-            console.log("CasparCG Server Version :", response.response.data);
-            ccgStatus.version = response.response.data;
-        });
     }
 
     updateAcmpData(channel) {
@@ -252,7 +251,7 @@ export class App {
 
             if (message.address.includes('/stage/layer')) {
                 //CCG 2.1 Handle OSC /file/path:
-                if (message.address.includes('file/path') && ccgStatus.version < "2.2") {
+                if (message.address.includes('file/path') && ccgStatus.serverVersion < "2.2") {
                     if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
                         ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                         ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
