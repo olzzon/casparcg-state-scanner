@@ -260,9 +260,9 @@ export class App {
             },
             Timeleft: {
                 timeLeft: (root) => {
-                    return root.layer[CCG_DEFAULT_LAYER-1].foreground.length - root.layer[CCG_DEFAULT_LAYER-1].foreground.time;
+                    return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.length - root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time;
                 },
-                time: (root) => { return root.layer[CCG_DEFAULT_LAYER-1].foreground.time; }
+                time: (root) => { return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time; }
             }
         };
 
