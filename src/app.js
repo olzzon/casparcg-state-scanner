@@ -105,7 +105,7 @@ export class App {
             ;
     }
 
-    getThisMachineIpaddresses() {
+    getThisMachineIpAddresses() {
         interfaces = os.networkInterfaces();
         ipAddresses = [];
         for (let deviceName in interfaces) {
@@ -126,8 +126,8 @@ export class App {
             localPort: Globals.DEFAULT_OSC_PORT
         });
 
-        oscConnection.on("ready", function () {
-            let ipAddresses = this.getThisMachineIpaddresses();
+        oscConnection.on("ready", () => {
+            let ipAddresses = this.getThisMachineIpAddresses();
 
             console.log("Listening for OSC over UDP.");
             ipAddresses.forEach(function (address) {
