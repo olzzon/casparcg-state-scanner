@@ -122,7 +122,7 @@ export class App {
 
     setupOscServer() {
         const oscConnection = new osc.UDPPort({
-            localAddress: "localhost",
+            localAddress: "0.0.0.0",
             localPort: Globals.DEFAULT_OSC_PORT
         });
 
