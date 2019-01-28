@@ -4,121 +4,79 @@ const fs = require('fs');
 const chokidar = require('chokidar');
 const convert = require('xml-js');
 
-import { ApolloServer, gql, PubSub } from 'apollo-server';
+import { ApolloServer, PubSub } from 'apollo-server';
 import { CasparCG } from 'casparcg-connection';
 
 //Utils:
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
 import {findLayerNumber, findChannelNumber} from './utils/oscStringHandling';
+import { generateCcgDataStructure } from './utils/ccgDatasctructure';
+import * as Globals from './utils/CONSTANTS';
 
 //GraphQl:
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
-
-// Generics:
-const CCG_HOST = "localhost";
-const CCG_LOG_PORT = 3250;
-const CCG_AMCP_PORT = 5250;
-const CCG_DEFAULT_LAYER = 10;
-const CCG_NUMBER_OF_LAYERS = 30;
-const DEFAULT_OSC_PORT = 5253;
-const DEFAULT_GRAPHQL_PORT = 5254;
-
-//Setup PubSub:
+//PubSub:
 const pubsub = new PubSub();
-const PUBSUB_INFO_UPDATED = 'INFO_UPDATED';
-const PUBSUB_CHANNELS_UPDATED = 'CHANNELS_UPDATED';
-const PUBSUB_PLAY_LAYER_UPDATED = 'PLAY_LAYER';
-const PUBSUB_TIMELEFT_UPDATED = 'TIMELEFT_UPDATED';
-const PUBSUB_MEDIA_FILE_CHANGED = 'MEDIA_FILE_CHANGED';
-
-//Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
-var data = fs.readFileSync( 'casparcg.config');
-if (configFile === "") {
-    data = "<channel></channel>";
-}
-var configFile = convert.xml2js(data, {
-    ignoreComment: true,
-    alwaysChildren: true,
-    compact: true
-});
-console.log("casparcg.config file ->", configFile.configuration.channels);
-
-
-//Setup Data Structure Interface:
-var ccgNumberOfChannels = configFile.configuration.channels.channel.length || 1;
-var ccgStatus = {
-    serverOnline: false,
-    serverVersion: ""
-};
-var ccgChannel = [];
-var obj = {
-        "foreground": {
-            "name": "",
-            "path": "",
-            "time": 0.0,
-            "length": 0.0,
-            "loop": false,
-            "paused": true
-        },
-        "background": {
-            "name": "",
-            "path": "",
-            "time": 0,
-            "length": 0,
-            "loop": false,
-            "paused": true
-        }
-};
-
-// Assign empty values to ccgChannel object
-var ch;
-var l;
-var layers = [];
-for (ch=0; ch<ccgNumberOfChannels; ch++) {
-    for (l=0; l<CCG_NUMBER_OF_LAYERS; l++) {
-        layers[l] = JSON.parse(JSON.stringify(obj));
-    }
-    ccgChannel[ch] = ccgChannel[ch] = JSON.parse(JSON.stringify({ "layer" : layers }));
-}
 
 export class App {
     constructor() {
+        //Binds:
         this.connectLog = this.connectLog.bind(this);
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
-        this.setupGraphQlExpressServer();
+
+        this.configFile = this.readCasparCgConfigFile();
+        this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
+        this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
+        this.serverOnline = false;
+        this.serverVersion = "";
+
+        this.setupGraphQlServer();
 
         //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
         this.setupAcmpConnection();
         this.ccgConnection.version()
         .then((response) => {
-            console.log("ACMP connection established to: ", CCG_HOST, ":", CCG_AMCP_PORT);
+            console.log("ACMP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
             console.log("CasparCG Server Version :", response.response.data);
-            ccgStatus.serverVersion = response.response.data;
+            this.serverVersion = response.response.data;
 
-            if (ccgStatus.serverVersion < "2.2") {
+            if (this.serverVersion < "2.2") {
                 this.setupCasparTcpLogServer();
-                this.fileWatchSetup(configFile.configuration.paths['thumbnail-path']._text);
+                this.fileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text);
             } else {
-                this.fileWatchSetup(configFile.configuration.paths['media-path']._text);
+                this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
                 //ToDo: serveronline is allways true on CCG 2.2
-                ccgStatus.serverOnline = true;
+                this.serverOnline = true;
             }
             this.setupOscServer();
         });
 
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         var timeLeftSubscription = setInterval(() => {
-            pubsub.publish(PUBSUB_TIMELEFT_UPDATED, { timeLeft: ccgChannel });
+            pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
         },
         40);
+    }
+
+    readCasparCgConfigFile() {
+        //Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
+        let data = fs.readFileSync( 'casparcg.config');
+        if (data === "") {
+            data = "<channel></channel>";
+        }
+        return convert.xml2js(data, {
+            ignoreComment: true,
+            alwaysChildren: true,
+            compact: true
+        });
     }
 
     setupAcmpConnection() {
         this.ccgConnection = new CasparCG(
             {
-            host: CCG_HOST,
-            port: CCG_AMCP_PORT,
+            host: Globals.CCG_HOST,
+            port: Globals.CCG_AMCP_PORT,
             autoConnect: false,
         });
         this.ccgConnection.connect();
@@ -130,7 +88,7 @@ export class App {
             {ignored: /(^|[\/\\])\../})
             .on('all', (event, path) => {
                 setTimeout(() => {
-                    pubsub.publish(PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
+                    pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
                     console.log("File/Folder Changes :" ,event, path);
                 }, 10);
             })
@@ -163,7 +121,7 @@ export class App {
         };
         const oscConnection = new osc.UDPPort({
             localAddress: "0.0.0.0",
-            localPort: DEFAULT_OSC_PORT
+            localPort: Globals.DEFAULT_OSC_PORT
         });
 
         oscConnection.on("ready", function () {
@@ -182,39 +140,39 @@ export class App {
             if (message.address.includes('/stage/layer')) {
                 //CCG 2.2 Handle OSC /file/path:
                 if (message.address.includes('foreground/file/path')) {
-                    if (ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                    if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
+                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
                         this.pulishInfoUpdate(channelIndex);
                     }
                 }
                 if (message.address.includes('background/file/path')) {
-                    if (ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
-                        ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
+                    if (this.ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
+                        this.ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
                         this.pulishInfoUpdate(channelIndex);
                     }
                 }
                 if (message.address.includes('foreground/file/name')) {
-                    ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                 }
                 if (message.address.includes('background/file/name')) {
-                    ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
+                    this.ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
                 }
                 if (message.address.includes('file/time')) {
-                    ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
-                    ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
                 }
                 if (message.address.includes('loop')) {
-                    ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
                 }
                 if (message.address.includes('/paused')) {
-                    ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
                 }
 
                 //CCG 2.1 Handle OSC /file/path:
-                if (message.address.includes('file/path') && ccgStatus.serverVersion < "2.2") {
-                    if (ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-                        ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                if (message.address.includes('file/path') && this.serverVersion < "2.2") {
+                    if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
+                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
                         this.pulishInfoUpdate(channelIndex);
                     }
                 }
@@ -228,54 +186,54 @@ export class App {
     pulishInfoUpdate(channelIndex) {
         let ccgPlayLayer = [];
 
-        for (let i=0; i<ccgNumberOfChannels; i++) {
+        for (let i=0; i<this.ccgNumberOfChannels; i++) {
             ccgPlayLayer.push({ "layer" : [] });
-            ccgPlayLayer[i].layer.push(ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
+            ccgPlayLayer[i].layer.push(this.ccgChannel[i].layer[CCG_DEFAULT_LAYER-1]);
         }
-        pubsub.publish(PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-        pubsub.publish(PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-        pubsub.publish(PUBSUB_CHANNELS_UPDATED, { channels: ccgChannel });
+        pubsub.publish(Globals.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+        pubsub.publish(Globals.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+        pubsub.publish(Globals.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
     }
 
 
-    setupGraphQlExpressServer() {
+    setupGraphQlServer() {
 
         // GraphQL resolver
         const resolvers = {
             Subscription: {
                 channels: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_CHANNELS_UPDATED]),
+                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_CHANNELS_UPDATED]),
                 },
                 playLayer: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_PLAY_LAYER_UPDATED]),
+                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_PLAY_LAYER_UPDATED]),
                 },
                 infoChannelUpdated: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_INFO_UPDATED]),
+                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_INFO_UPDATED]),
                 },
                 timeLeft: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_TIMELEFT_UPDATED]),
+                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_TIMELEFT_UPDATED]),
                 },
                 mediaFilesChanged: {
-                    subscribe: () => pubsub.asyncIterator([PUBSUB_MEDIA_FILE_CHANGED]),
+                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_MEDIA_FILE_CHANGED]),
                 }
 
             },
             Query: {
                 channels: () => {
-                    return ccgChannel;
+                    return this.ccgChannel;
                 },
                 layer: (obj, args, context, info) => {
-                    const ccgLayerString = JSON.stringify(ccgChannel[args.ch-1].layer[args.l-1]);
+                    const ccgLayerString = JSON.stringify(this.ccgChannel[args.ch-1].layer[args.l-1]);
                     return ccgLayerString;
                 },
                 timeLeft: (obj, args, context, info) => {
-                    return (ccgChannel[args.ch-1].layer[args.l-1].foreground.length - ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
+                    return (this.ccgChannel[args.ch-1].layer[args.l-1].foreground.length - this.ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
                 },
                 serverOnline: () => {
-                    return ccgStatus.serverOnline;
+                    return this.serverOnline;
                 },
                 serverVersion: () => {
-                    return ccgStatus.serverVersion;
+                    return this.serverVersion;
                 }
             },
             Channels: {
@@ -312,7 +270,7 @@ export class App {
             resolvers
         });
 
-        server.listen(DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
+        server.listen(Globals.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${Globals.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
     }
 
 
@@ -323,15 +281,15 @@ export class App {
 
     updateAcmpData(channel) {
         return new Promise((resolve, reject) => {
-            if (channel > ccgNumberOfChannels) {
+            if (channel > this.ccgNumberOfChannels) {
                 resolve(true);
             }
-            this.ccgConnection.info(channel,CCG_DEFAULT_LAYER)
+            this.ccgConnection.info(channel,Globals.CCG_DEFAULT_LAYER)
             .then((response) => {
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.name = extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.name = extractFilenameFromPath(response.response.data.background.producer.filename || "");
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
-                ccgChannel[channel-1].layer[CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
+                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].foreground.name = extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].background.name = extractFilenameFromPath(response.response.data.background.producer.filename || "");
+                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
+                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
 
                 this.updateAcmpData(channel + 1)
                 .then(() => {
@@ -351,14 +309,14 @@ export class App {
         //Setup TCP errorlog reciever:
         const casparLogClient = new net.Socket();
 
-        this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient);
+        this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient);
 
         casparLogClient.on('error', (error) => {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
-            console.log('casparcg tcp log should be set to IP: ' + CCG_HOST + " Port : " + CCG_LOG_PORT);
-            ccgStatus.serverOnline = false;
-            var intervalConnect = setTimeout(() => this.connectLog(CCG_LOG_PORT, CCG_HOST, casparLogClient), 5000);
+            console.log('casparcg tcp log should be set to IP: ' + Globals.CCG_HOST + " Port : " + Globals.CCG_LOG_PORT);
+            this.serverOnline = false;
+            var intervalConnect = setTimeout(() => this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
@@ -378,7 +336,7 @@ export class App {
     connectLog(port, host, client) {
         client.connect(port, host, () => {
             console.log('CasparLogClient connected to: ' + host + ':' + port);
-            ccgStatus.serverOnline = true;
+            this.serverOnline = true;
         });
     }
 

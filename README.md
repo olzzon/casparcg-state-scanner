@@ -6,14 +6,8 @@ https://github.com/olzzon/casparcg-state-scanner-example
 ```
 
 Defaults are specified in top of app.js, but should be ok if you run casparcg-state-scanner in your CCG server folder. 
-```
-// Generics:
-const CCG_HOST = "localhost";
-const CCG_LOG_PORT = 3250;
-const CCG_AMCP_PORT = 5250;
-const CCG_DEFAULT_LAYER = 10;
-const CCG_NUMBER_OF_LAYERS = 30;
-``` 
+If you wan´t to change default ports and IP you can do that in ./utils/CONSTANTS.js
+And manually rebuild.
 
 ## Queries:
 
@@ -131,7 +125,7 @@ yarn start
 
 ### For API calls from other programs use:
 ```
-http://xxx.xxx.xxx.xxx:5254/graphql
+http://xxx.xxx.xxx.xxx:5254
 ```
 
 ### If you call it from a browser, you´ll get a Playground where you can test your queries and subscriptions. And see the data Schema
