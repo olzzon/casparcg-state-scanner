@@ -388,6 +388,9 @@ export class App {
                 },
                 serverOnline: () => {
                     return ccgStatus.serverOnline;
+                },
+                serverVersion: () => {
+                    return ccgStatus.serverVersion;
                 }
             },
             Channels: {
