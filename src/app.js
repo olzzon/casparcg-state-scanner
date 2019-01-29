@@ -19,14 +19,15 @@ import * as Globals from './utils/CONSTANTS';
 import { ApolloServer, PubSub } from 'apollo-server';
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
-//PubSub:
-const pubsub = new PubSub();
 
 export class App {
     constructor() {
         //Binds:
         this.connectLog = this.connectLog.bind(this);
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
+
+        //PubSub:
+        this.pubsub = new PubSub();
 
         //Setup AMCP Connection:
         this.ccgConnection = new CasparCG(
@@ -68,7 +69,7 @@ export class App {
 
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         const timeLeftSubscription = setInterval(() => {
-            pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
+            this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
         },
         40);
     }
@@ -92,7 +93,7 @@ export class App {
             {ignored: /(^|[\/\\])\../})
             .on('all', (event, path) => {
                 setTimeout(() => {
-                    pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
+                    this.pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
                     console.log("File/Folder Changes :" ,event, path);
                 }, 10);
             })
@@ -130,7 +131,7 @@ export class App {
             let ipAddresses = this.getThisMachineIpAddresses();
 
             console.log("Listening for OSC over UDP.");
-            ipAddresses.forEach(function (address) {
+            ipAddresses.forEach((address) => {
                 console.log("OSC Host:", address + ", Port:", oscConnection.options.localPort);
             });
         });
@@ -192,9 +193,9 @@ export class App {
             ccgPlayLayer.push({ "layer" : [] });
             ccgPlayLayer[i].layer.push(this.ccgChannel[i].layer[Globals.CCG_DEFAULT_LAYER-1]);
         }
-        pubsub.publish(Globals.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
-        pubsub.publish(Globals.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-        pubsub.publish(Globals.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
+        this.pubsub.publish(Globals.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+        this.pubsub.publish(Globals.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
+        this.pubsub.publish(Globals.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
     }
 
 
@@ -204,19 +205,19 @@ export class App {
         const resolvers = {
             Subscription: {
                 channels: {
-                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_CHANNELS_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_CHANNELS_UPDATED]),
                 },
                 playLayer: {
-                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_PLAY_LAYER_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_PLAY_LAYER_UPDATED]),
                 },
                 infoChannelUpdated: {
-                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_INFO_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_INFO_UPDATED]),
                 },
                 timeLeft: {
-                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_TIMELEFT_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_TIMELEFT_UPDATED]),
                 },
                 mediaFilesChanged: {
-                    subscribe: () => pubsub.asyncIterator([Globals.PUBSUB_MEDIA_FILE_CHANGED]),
+                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_MEDIA_FILE_CHANGED]),
                 }
 
             },
