@@ -19,6 +19,7 @@
   "scripts": {
     "build": "babel src -d dist",
     "start": "node ./dist/index.js",
+    "debug": "node --inspect ./dist/index.js",
     "build-linux": "yarn pkg -t node10-linux ./dist/index.js --output ./dist/CasparCG-state-scanner",
     "build-win": "yarn pkg -t node10-win ./dist/index.js --output ./dist/CasparCG-state-scanner.exe"
   },
