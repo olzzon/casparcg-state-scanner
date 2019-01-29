@@ -1,18 +1,17 @@
 //System:
 import net from 'net'; // Used for TCP log server
-import fs from 'fs'; // Used for reading casparcg.config file
 import os from 'os'; // Used to display (log) network addresses on local machine
 
 //Modules:
 import { CasparCG } from 'casparcg-connection';
 import osc from 'osc';
-import convert from 'xml-js';
 import chokidar from 'chokidar'; //Used to watch filesystem for changes
 
 //Utils:
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
 import {findLayerNumber, findChannelNumber} from './utils/oscStringHandling';
 import { generateCcgDataStructure } from './utils/ccgDatasctructure';
+import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import * as Globals from './utils/CONSTANTS';
 
 //GraphQl:
@@ -39,7 +38,7 @@ export class App {
         );
 
         //Define vars:
-        this.configFile = this.readCasparCgConfigFile();
+        this.configFile = readCasparCgConfigFile();
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
         this.serverOnline = false;
@@ -72,19 +71,6 @@ export class App {
             this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
         },
         40);
-    }
-
-    readCasparCgConfigFile() {
-        //Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
-        let data = fs.readFileSync('casparcg.config');
-        if (data === "") {
-            data = "<channel></channel>";
-        }
-        return convert.xml2js(data, {
-            ignoreComment: true,
-            alwaysChildren: true,
-            compact: true
-        });
     }
 
     //Follow media directories and pubsub if changes occour:
