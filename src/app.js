@@ -1,13 +1,13 @@
 //System:
-import net from 'net';
-import fs from 'fs';
-import os from 'os';
+import net from 'net'; // Used for TCP log server
+import fs from 'fs'; // Used for reading casparcg.config file
+import os from 'os'; // Used to display (log) network addresses on local machine
 
 //Modules:
 import { CasparCG } from 'casparcg-connection';
 import osc from 'osc';
 import convert from 'xml-js';
-import chokidar from 'chokidar';
+import chokidar from 'chokidar'; //Used to watch filesystem for changes
 
 //Utils:
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
