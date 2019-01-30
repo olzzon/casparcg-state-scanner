@@ -24,6 +24,7 @@ export class App {
         //Binds:
         this.connectLog = this.connectLog.bind(this);
         this.pulishInfoUpdate = this.pulishInfoUpdate.bind(this);
+        this.startSubscriptions = this.startTimerControlledServices.bind(this);
 
         //PubSub:
         this.pubsub = new PubSub();
@@ -59,18 +60,33 @@ export class App {
                 this.fileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text);
             } else {
                 this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
-                //ToDo: serveronline is allways true on CCG 2.2
-                this.serverOnline = true;
             }
             //OSC server will not recieve data before a CCG connection is established:
             this.setupOscServer();
         });
+        this.startTimerControlledServices();
+    }
 
-        //Update of timeleft is set to a default 40ms (same as 25FPS)
-        const timeLeftSubscription = setInterval(() => {
-            this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
+    startTimerControlledServices() {
+        //Check server online:
+        const serverOnlineSubscription = setInterval(() => {
+            if (this.serverOnline) {
+                this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
+            }
         },
         40);
+        //Update of timeleft is set to a default 40ms (same as 25FPS)
+        const timeLeftSubscription = setInterval(() => {
+            this.ccgConnection.ping()
+            .then((response) => {
+                this.serverOnline = (response.data.response === "PONG");
+            })
+            .catch((error) => {
+                console.log("Server not connectd");
+                this.serverOnline = false;
+            });
+        },
+        1000);
     }
 
     //Follow media directories and pubsub if changes occour:
@@ -186,7 +202,6 @@ export class App {
 
 
     setupGraphQlServer() {
-
         // GraphQL resolver
         const resolvers = {
             Subscription: {
@@ -325,7 +340,6 @@ export class App {
     connectLog(port, host, client) {
         client.connect(port, host, () => {
             console.log('CasparLogClient connected to: ' + host + ':' + port);
-            this.serverOnline = true;
         });
     }
 
