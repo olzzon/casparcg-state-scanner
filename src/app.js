@@ -77,9 +77,9 @@ export class App {
         40);
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         const timeLeftSubscription = setInterval(() => {
-            this.ccgConnection.ping()
+            this.ccgConnection.version()
             .then((response) => {
-                this.serverOnline = (response.data.response === "PONG");
+                this.serverOnline = true;
             })
             .catch((error) => {
                 console.log("Server not connectd");
