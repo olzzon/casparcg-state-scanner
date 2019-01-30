@@ -2,9 +2,6 @@
 import os from 'os'; // Used to display (log) network addresses on local machine
 import osc from 'osc'; //Using OSC fork from PieceMeta/osc.js as it has excluded hardware serialport support and thereby is crossplatform
 
-//Utils:
-import {findLayerNumber, findChannelNumber} from './oscStringHandling';
-
 export class OscServer {
     constructor(pubsub, ccgChannel) {
         this.pubsub = pubsub;
@@ -27,8 +24,8 @@ export class OscServer {
             });
         })
         .on('message', (message) => {
-            let channelIndex = findChannelNumber(message.address)-1;
-            let layerIndex = findLayerNumber(message.address)-1;
+            let channelIndex = this.findChannelNumber(message.address)-1;
+            let layerIndex = this.findLayerNumber(message.address)-1;
 
             if (message.address.includes('/stage/layer')) {
                 //CCG 2.2 Handle OSC /file/path:
@@ -106,5 +103,18 @@ export class OscServer {
         }
         return ipAddresses;
     }
+
+    findChannelNumber(string) {
+        let channel = string.replace("/channel/", "");
+        channel = channel.slice(0, (channel.indexOf("/")));
+        return channel;
+    }
+
+    findLayerNumber(string) {
+        let channel = string.slice(string.indexOf('layer/')+6);
+        channel = channel.slice(0, (channel.indexOf("/")));
+        return channel;
+    }
+
 
 }
