@@ -89,7 +89,7 @@ export class App {
                 this.graphQlServer.setServerOnline(false);
             });
         },
-        1000);
+        3000);
     }
 
     //Follow media directories and pubsub if changes occour:
