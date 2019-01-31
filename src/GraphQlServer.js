@@ -2,14 +2,18 @@
 import { ApolloServer } from 'apollo-server';
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
-export default class GraphQlServer {
-    constructor() {
-        console.log("constructed");
+//Utils:
+import * as Globals from './utils/CONSTANTS';
+
+
+export class CcgGraphQlServer {
+    constructor(pubsub, ccgChannel, serverOnline) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
         this.serverOnline = serverOnline;
+        this.setupGraphQlServer();
     }
-/*
+
     setupGraphQlServer() {
         // GraphQL resolver
         const resolvers = {
@@ -85,5 +89,4 @@ export default class GraphQlServer {
 
         server.listen(Globals.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${Globals.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
     }
-*/
 }

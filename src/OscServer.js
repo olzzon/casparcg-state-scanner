@@ -2,10 +2,14 @@
 import os from 'os'; // Used to display (log) network addresses on local machine
 import osc from 'osc'; //Using OSC fork from PieceMeta/osc.js as it has excluded hardware serialport support and thereby is crossplatform
 
+//Utils:
+import * as Globals from './utils/CONSTANTS';
+
 export class OscServer {
     constructor(pubsub, ccgChannel) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
+        this.setupOscServer();
     }
 
     setupOscServer() {

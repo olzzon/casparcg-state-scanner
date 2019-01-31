@@ -9,8 +9,8 @@ import chokidar from 'chokidar'; //Used to watch filesystem for changes
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
 import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
-import { setupOscServer } from './OscServer';
-import GraphQlServer, { setupGraphQlServer } from './GraphQlServer';
+import { OscServer } from './OscServer';
+import { CcgGraphQlServer } from './GraphQlServer';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -25,7 +25,6 @@ export class App {
 
         //PubSub:
         this.pubsub = new PubSub();
-//        this.graphQlServer = new GraphQlServer();
 
         //Setup AMCP Connection:
         this.ccgConnection = new CasparCG(
@@ -41,6 +40,10 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
         this.serverOnline = false;
+
+
+        //Setup GraphQL:
+        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel, this.serverOnline);
 
 
         //Check CCG Version and initialise OSC server:
@@ -59,13 +62,13 @@ export class App {
                 this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
             }
             //OSC server will not recieve data before a CCG connection is established:
-            setupOscServer(this.pubsub, this.ccgChannel);
-            //Setup GraphQL:
-            setupGraphQlServer(this.pubsub, this.ccgChannel, this.serverOnline);
+            this.oscServer = new OscServer(this.pubsub, this.ccgChannel);
         })
         .catch((error) => {
             console.log("No connection to CasparCG");
         });
+
+
         this.startTimerControlledServices();
     }
 
@@ -182,6 +185,4 @@ export class App {
         let nameEnd = amcpCommand.indexOf('"', nameStart + 1);
         return amcpChannel;
     }
-
-
 }
