@@ -39,11 +39,9 @@ export class App {
         this.configFile = readCasparCgConfigFile();
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
-        this.serverOnline = false;
-
 
         //Setup GraphQL:
-        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel, this.serverOnline);
+        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
 
 
         //Check CCG Version and initialise OSC server:
@@ -75,7 +73,7 @@ export class App {
     startTimerControlledServices() {
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         const timeLeftSubscription = setInterval(() => {
-            if (this.serverOnline) {
+            if (this.graphQlServer.getServerOnline()) {
                 this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
             }
         },
@@ -84,11 +82,11 @@ export class App {
         const serverOnlineSubscription = setInterval(() => {
             this.ccgConnection.version()
             .then(() => {
-                this.serverOnline = true;
+                this.graphQlServer.setServerOnline(true);
             })
             .catch((error) => {
                 console.log("Server not connected :", error);
-                this.serverOnline = false;
+                this.graphQlServer.setServerOnline(false);
             });
         },
         1000);
@@ -153,7 +151,7 @@ export class App {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
             console.log('casparcg tcp log should be set to IP: ' + Globals.CCG_HOST + " Port : " + Globals.CCG_LOG_PORT);
-            this.serverOnline = false;
+            this.graphQlServer.setServerOnline(false);
             let intervalConnect = setTimeout(() => this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {

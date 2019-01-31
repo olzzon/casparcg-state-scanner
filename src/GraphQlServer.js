@@ -7,10 +7,14 @@ import * as Globals from './utils/CONSTANTS';
 
 
 export class CcgGraphQlServer {
-    constructor(pubsub, ccgChannel, serverOnline) {
+    constructor(pubsub, ccgChannel) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
-        this.serverOnline = serverOnline;
+        this.serverOnline = false;
+
+        this.setServerOnline = this.setServerOnline.bind(this);
+        this.getServerOnline = this.getServerOnline.bind(this);
+
         this.setupGraphQlServer();
     }
 
@@ -47,7 +51,7 @@ export class CcgGraphQlServer {
                     return (this.ccgChannel[args.ch-1].layer[args.l-1].foreground.length - this.ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
                 },
                 serverOnline: () => {
-                    return this.serverOnline;
+                    return this.getServerOnline();
                 },
                 serverVersion: () => {
                     return this.serverVersion;
@@ -88,5 +92,12 @@ export class CcgGraphQlServer {
         });
 
         server.listen(Globals.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${Globals.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
+    }
+
+    setServerOnline(state) {
+        this.serverOnline = state;
+    }
+    getServerOnline() {
+        return this.serverOnline;
     }
 }
