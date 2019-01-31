@@ -9,14 +9,13 @@ import chokidar from 'chokidar'; //Used to watch filesystem for changes
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
 import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
-import { setupOscServer } from './utils/oscServer';
+import { setupOscServer } from './OscServer';
+import GraphQlServer, { setupGraphQlServer } from './GraphQlServer';
 import * as Globals from './utils/CONSTANTS';
 
 
 //GraphQl:
-import { ApolloServer, PubSub } from 'apollo-server';
-import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
-
+import { PubSub } from 'apollo-server';
 
 export class App {
     constructor() {
@@ -26,6 +25,7 @@ export class App {
 
         //PubSub:
         this.pubsub = new PubSub();
+//        this.graphQlServer = new GraphQlServer();
 
         //Setup AMCP Connection:
         this.ccgConnection = new CasparCG(
@@ -42,10 +42,9 @@ export class App {
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
         this.serverOnline = false;
 
-        //Setup GraphQL:
-        this.setupGraphQlServer();
 
         //Check CCG Version and initialise OSC server:
+        console.log("Checking CasparCG connection");
         this.ccgConnection.version()
         .then((response) => {
             console.log("ACMP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
@@ -61,6 +60,11 @@ export class App {
             }
             //OSC server will not recieve data before a CCG connection is established:
             setupOscServer(this.pubsub, this.ccgChannel);
+            //Setup GraphQL:
+            setupGraphQlServer(this.pubsub, this.ccgChannel, this.serverOnline);
+        })
+        .catch((error) => {
+            console.log("No connection to CasparCG");
         });
         this.startTimerControlledServices();
     }
@@ -105,84 +109,6 @@ export class App {
             })
             ;
     }
-
-    setupGraphQlServer() {
-        // GraphQL resolver
-        const resolvers = {
-            Subscription: {
-                channels: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_CHANNELS_UPDATED]),
-                },
-                playLayer: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_PLAY_LAYER_UPDATED]),
-                },
-                infoChannelUpdated: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_INFO_UPDATED]),
-                },
-                timeLeft: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_TIMELEFT_UPDATED]),
-                },
-                mediaFilesChanged: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_MEDIA_FILE_CHANGED]),
-                }
-
-            },
-            Query: {
-                channels: () => {
-                    return this.ccgChannel;
-                },
-                layer: (obj, args, context, info) => {
-                    const ccgLayerString = JSON.stringify(this.ccgChannel[args.ch-1].layer[args.l-1]);
-                    return ccgLayerString;
-                },
-                timeLeft: (obj, args, context, info) => {
-                    return (this.ccgChannel[args.ch-1].layer[args.l-1].foreground.length - this.ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
-                },
-                serverOnline: () => {
-                    return this.serverOnline;
-                },
-                serverVersion: () => {
-                    return this.serverVersion;
-                }
-            },
-            Channels: {
-                layers: (root) => root.layer
-            },
-            Layers: {
-                foreground: (root) => root.foreground,
-                background: (root) => root.background
-            },
-            Foreground: {
-                name: (root) => { return root.name; },
-                path: (root) => { return root.path; },
-                length: (root) => { return root.length; },
-                loop: (root) => { return root.loop; },
-                paused: (root) => { return root.paused; }
-            },
-            Background: {
-                name: (root) => { return root.name; },
-                path: (root) => { return root.path; },
-                length: (root) => { return root.length; },
-                loop: (root) => { return root.loop; }
-            },
-            Timeleft: {
-                timeLeft: (root) => {
-                    return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.length - root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time;
-                },
-                time: (root) => { return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time; }
-            }
-        };
-
-        const typeDefs = CCG_QUERY_SUBSCRIPTION;
-        const server = new ApolloServer({
-            typeDefs,
-            resolvers
-        });
-
-        server.listen(Globals.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${Globals.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
-    }
-
-
 
     //CCG 2.1 compatibility:
     //Wil be maintanied as long as needed:
