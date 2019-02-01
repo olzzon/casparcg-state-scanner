@@ -60,7 +60,7 @@ export class App {
                 this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
             }
             //OSC server will not recieve data before a CCG connection is established:
-            this.oscServer = new OscServer(this.pubsub, this.ccgChannel);
+            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels);
         })
         .catch((error) => {
             console.log("No connection to CasparCG");
