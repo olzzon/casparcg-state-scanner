@@ -36,13 +36,13 @@ export class OscServer {
                 if (message.address.includes('foreground/file/path')) {
                     if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
                         this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        this.pulishInfoUpdate(channelIndex);
+                        this.pulishInfoUpdate(channelIndex, this.ccgChannel);
                     }
                 }
                 if (message.address.includes('background/file/path')) {
                     if (this.ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
                         this.ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
-                        this.pulishInfoUpdate(channelIndex);
+                        this.pulishInfoUpdate(channelIndex, this.ccgChannel);
                     }
                 }
                 if (message.address.includes('foreground/file/name')) {
@@ -67,7 +67,7 @@ export class OscServer {
                     if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
                         this.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                         this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        this.pulishInfoUpdate(channelIndex);
+                        this.pulishInfoUpdate(channelIndex, this.ccgChannel);
                     }
                 }
             }
@@ -80,16 +80,15 @@ export class OscServer {
         console.log(`OSC listening on port 5253`);
     }
 
-    pulishInfoUpdate(channelIndex) {
+    pulishInfoUpdate(channelIndex, ccgData) {
         let ccgPlayLayer = [];
-
         for (let i=0; i<this.ccgNumberOfChannels; i++) {
             ccgPlayLayer.push({ "layer" : [] });
-            ccgPlayLayer[i].layer.push(this.ccgChannel[i].layer[Globals.CCG_DEFAULT_LAYER-1]);
+            ccgPlayLayer[i].layer.push(this.ccgData[i].layer[Globals.CCG_DEFAULT_LAYER-1]);
         }
         this.pubsub.publish(Globals.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
         this.pubsub.publish(Globals.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
-        this.pubsub.publish(Globals.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
+        this.pubsub.publish(Globals.PUBSUB_CHANNELS_UPDATED, { channels: ccgData });
     }
 
 

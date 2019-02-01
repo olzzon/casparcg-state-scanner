@@ -161,7 +161,7 @@ export class App {
                 .then(() => {
                 let channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
-                        this.pulishInfoUpdate(channel);
+                        this.oscServer.pulishInfoUpdate(channel, this.ccgChannel);
                     }
                 });
             }
