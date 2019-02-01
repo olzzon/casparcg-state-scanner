@@ -60,7 +60,7 @@ export class App {
                 this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
             }
             //OSC server will not recieve data before a CCG connection is established:
-            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels);
+            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels, this.serverVersion);
         })
         .catch((error) => {
             console.log("No connection to CasparCG");
@@ -163,6 +163,13 @@ export class App {
                     if ( channel > 0) {
                         this.oscServer.pulishInfoUpdate(channel, this.ccgChannel);
                     }
+                });
+            } else if (data.includes("Destroyed")) {
+                //"Destroyed" is used to catch if a clip is
+                //loaded with LOADBG and AUTOMIX
+                this.updateAcmpData(1)
+                .then(() => {
+                    this.oscServer.pulishInfoUpdate(1, this.ccgChannel);
                 });
             }
         });

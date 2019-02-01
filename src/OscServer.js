@@ -6,10 +6,11 @@ import osc from 'osc'; //Using OSC fork from PieceMeta/osc.js as it has excluded
 import * as Globals from './utils/CONSTANTS';
 
 export class OscServer {
-    constructor(pubsub, ccgChannel, ccgNumberOfChannels) {
+    constructor(pubsub, ccgChannel, ccgNumberOfChannels, serverVersion) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
         this.ccgNumberOfChannels = ccgNumberOfChannels;
+        this.serverVersopn = serverVersion;
         this.setupOscServer();
     }
 
