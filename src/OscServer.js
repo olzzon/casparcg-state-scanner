@@ -10,7 +10,7 @@ export class OscServer {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
         this.ccgNumberOfChannels = ccgNumberOfChannels;
-        this.serverVersopn = serverVersion;
+        this.serverVersion = serverVersion;
         this.setupOscServer();
     }
 
