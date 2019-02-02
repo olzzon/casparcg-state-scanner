@@ -119,6 +119,7 @@ export class App {
         return new Promise((resolve, reject) => {
             if (channel > this.ccgNumberOfChannels) {
                 resolve(true);
+                return;
             }
             this.ccgConnection.info(channel,Globals.CCG_DEFAULT_LAYER)
             .then((response) => {
@@ -163,13 +164,6 @@ export class App {
                     if ( channel > 0) {
                         this.oscServer.pulishInfoUpdate(channel, this.ccgChannel);
                     }
-                });
-            } else if (data.includes("Destroyed")) {
-                //"Destroyed" is used to catch if a clip is
-                //loaded with LOADBG and AUTOMIX
-                this.updateAcmpData(1)
-                .then(() => {
-                    this.oscServer.pulishInfoUpdate(1, this.ccgChannel);
                 });
             }
         });
