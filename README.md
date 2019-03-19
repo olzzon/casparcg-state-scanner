@@ -1,5 +1,29 @@
 # CasparCG State Scanner
 App that handles OSC data from CasparCG Server, and deliver status as graphQL queries and subscriptions.
+
+### For now start state-scanner AFTER the CCG-server.
+* When loading state-scanner it checks for CCG version, and if not responded, it will run with CCG 2.1.xx support.
+
+## Running on CasparCG 2.2.xx
+Be aware that CasparCG 2.2.xx has disabled OSC by default, so you need to enable it in casparcg.config
+
+### Place this code inside the configuration-tag in casparcg.config file
+```
+<osc>
+  <default-port>6250</default-port>
+  <disable-send-to-amcp-clients>false [true|false]</disable-send-to-amcp-clients>
+  <predefined-clients>
+    <predefined-client>
+      <address>127.0.0.1</address>
+      <port>5253</port>
+    </predefined-client>
+  </predefined-clients>
+</osc>
+
+```
+
+
+
 ### A Simple React Client example is here:
 ```
 https://github.com/olzzon/casparcg-state-scanner-example
