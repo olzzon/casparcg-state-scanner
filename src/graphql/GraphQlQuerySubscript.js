@@ -14,6 +14,7 @@ export const CCG_QUERY_SUBSCRIPTION = gql `
             channels: [Channels]
             layer(ch: Int!, l: Int!): String
             timeLeft(ch: Int!, l: Int!): String
+            mediaFolders: [Folder]
         },
         type Channels {
             layers: [Layers]
@@ -38,5 +39,8 @@ export const CCG_QUERY_SUBSCRIPTION = gql `
         type Timeleft {
             timeLeft: Float
             time: Float
+        }
+        type Folder {
+            folder: String
         }
         `;
