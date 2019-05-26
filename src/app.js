@@ -41,12 +41,12 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
-        //Setup GraphQL:
-        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
-
         //Get folder structure in media path:
         this.mediaFolders = getMediaFolders(this.configFile.configuration.paths['media-path']._text);
         console.log("Media Folders :", this.mediaFolders);
+
+        //Setup GraphQL:
+        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel, this.mediaFolders);
 
         //Check CCG Version and initialise OSC server:
         console.log("Checking CasparCG connection");

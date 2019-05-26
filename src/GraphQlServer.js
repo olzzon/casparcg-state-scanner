@@ -7,9 +7,10 @@ import * as Globals from './utils/CONSTANTS';
 
 
 export class CcgGraphQlServer {
-    constructor(pubsub, ccgChannel) {
+    constructor(pubsub, ccgChannel, mediaFolders) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
+        this.mediaFolders = mediaFolders;
         this.serverOnline = false;
 
         this.setServerOnline = this.setServerOnline.bind(this);
@@ -52,6 +53,9 @@ export class CcgGraphQlServer {
                 },
                 serverOnline: () => {
                     return this.getServerOnline();
+                },
+                mediaFolders: () => {
+                    return this.mediaFolders;
                 },
                 serverVersion: () => {
                     return this.serverVersion;
