@@ -11,7 +11,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
-import { getPathFolders } from './utils/getFolderStructure';
+import { getFolders } from './utils/getFolderStructure';
 import * as Globals from './utils/CONSTANTS';
 
 
