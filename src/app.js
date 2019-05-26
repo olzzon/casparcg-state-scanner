@@ -11,6 +11,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
+import { getMediaFolders } from './utils/getMediaFolderStructure';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -43,6 +44,9 @@ export class App {
         //Setup GraphQL:
         this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
 
+        //Get folder structure in media path:
+        this.mediaFolders = getMediaFolders(this.configFile.configuration.paths['media-path']._text);
+        console.log("Media Folders :", this.mediaFolders);
 
         //Check CCG Version and initialise OSC server:
         console.log("Checking CasparCG connection");
@@ -111,9 +115,9 @@ export class App {
             ;
     }
 
-    //CCG 2.1 compatibility:
-    //Wil be maintanied as long as needed:
-
+    // Rest of the code is for
+    // CCG 2.1 compatibility
+    // And wil be maintanied as long as needed:
 
     updateData(channel) {
         return new Promise((resolve, reject) => {
@@ -167,7 +171,6 @@ export class App {
                 });
             }
         });
-
     }
 
     connectLog(port, host, client) {

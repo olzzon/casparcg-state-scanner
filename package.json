@@ -6,10 +6,10 @@
   "author": "Kasper Olsson Hans (TV2 Denmark)",
   "license": "MIT",
   "dependencies": {
-    "apollo-server": "^2.2.0",
-    "casparcg-connection": "^4.5.3",
-    "chokidar": "^2.0.4",
-    "graphql": "^14.0.2",
+    "apollo-server": "^2.5.0",
+    "casparcg-connection": "^4.7.0",
+    "chokidar": "^3.0.0",
+    "graphql": "^14.3.1",
     "http": "^0.0.0",
     "osc": "https://github.com/PieceMeta/osc.js/tarball/master",
     "tslib": "^1.9.3",
@@ -23,10 +23,10 @@
     "build-win": "yarn pkg -t node10-win ./dist/index.js --output ./dist/CasparCG-state-scanner.exe"
   },
   "devDependencies": {
-    "@babel/core": "^7.1.2",
-    "@babel/node": "^7.2.2",
-    "@babel/preset-env": "^7.1.0",
-    "@babel/cli": "^7.1.2",
-    "pkg": "^4.3.7"
+    "@babel/core": "^7.4.5",
+    "@babel/node": "^7.4.5",
+    "@babel/preset-env": "^7.4.5",
+    "@babel/cli": "^7.4.4",
+    "pkg": "^4.4.0"
   }
 }
