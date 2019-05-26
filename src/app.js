@@ -11,7 +11,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
-import { getMediaFolders } from './utils/getMediaFolderStructure';
+import { getPathFolders } from './utils/getFolderStructure';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -42,7 +42,7 @@ export class App {
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
         //Get folder structure in media path:
-        this.mediaFolders = getMediaFolders(this.configFile.configuration.paths['media-path']._text);
+        this.mediaFolders = getPathFolders(this.configFile.configuration.paths['media-path']._text);
         console.log("Media Folders :", this.mediaFolders);
 
         //Setup GraphQL:
