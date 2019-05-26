@@ -105,6 +105,8 @@ export class App {
                     this.pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
                     console.log("File/Folder Changes :" ,event, path);
                 }, 10);
+                //Update mediaFolders:
+                this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
             })
             .on('ready', (event, path) => {
                 console.log("File/Folder Watch Ready ");

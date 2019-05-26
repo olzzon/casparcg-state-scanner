@@ -9,6 +9,7 @@
     "apollo-server": "^2.5.0",
     "casparcg-connection": "^4.7.0",
     "chokidar": "^3.0.0",
+    "filehound": "^1.17.0",
     "graphql": "^14.3.1",
     "http": "^0.0.0",
     "osc": "https://github.com/PieceMeta/osc.js/tarball/master",
@@ -23,10 +24,10 @@
     "build-win": "yarn pkg -t node10-win ./dist/index.js --output ./dist/CasparCG-state-scanner.exe"
   },
   "devDependencies": {
+    "@babel/cli": "^7.4.4",
     "@babel/core": "^7.4.5",
     "@babel/node": "^7.4.5",
     "@babel/preset-env": "^7.4.5",
-    "@babel/cli": "^7.4.4",
     "pkg": "^4.4.0"
   }
 }
