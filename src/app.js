@@ -11,6 +11,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
+import { getFolders } from './utils/getFolderStructure';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -40,9 +41,12 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
-        //Setup GraphQL:
-        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
+        //Get folder structure in media path:
+        this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
+        console.log("Media Folders :", this.mediaFolders);
 
+        //Setup GraphQL:
+        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel, this.mediaFolders);
 
         //Check CCG Version and initialise OSC server:
         console.log("Checking CasparCG connection");
@@ -101,6 +105,8 @@ export class App {
                     this.pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
                     console.log("File/Folder Changes :" ,event, path);
                 }, 10);
+                //Update mediaFolders:
+                this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
             })
             .on('ready', (event, path) => {
                 console.log("File/Folder Watch Ready ");
@@ -111,9 +117,9 @@ export class App {
             ;
     }
 
-    //CCG 2.1 compatibility:
-    //Wil be maintanied as long as needed:
-
+    // Rest of the code is for
+    // CCG 2.1 compatibility
+    // And wil be maintanied as long as needed:
 
     updateData(channel) {
         return new Promise((resolve, reject) => {
@@ -167,7 +173,6 @@ export class App {
                 });
             }
         });
-
     }
 
     connectLog(port, host, client) {
