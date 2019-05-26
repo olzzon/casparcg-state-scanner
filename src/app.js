@@ -48,7 +48,7 @@ export class App {
         console.log("Checking CasparCG connection");
         this.ccgConnection.version()
         .then((response) => {
-            console.log("ACMP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
+            console.log("AMCP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
             console.log("CasparCG Server Version :", response.response.data);
             this.serverVersion = response.response.data;
 
@@ -115,7 +115,7 @@ export class App {
     //Wil be maintanied as long as needed:
 
 
-    updateAcmpData(channel) {
+    updateData(channel) {
         return new Promise((resolve, reject) => {
             if (channel > this.ccgNumberOfChannels) {
                 resolve(true);
@@ -128,7 +128,7 @@ export class App {
                 this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
                 this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
 
-                this.updateAcmpData(channel + 1)
+                this.updateData(channel + 1)
                 .then(() => {
                     resolve(true);
                 });
@@ -158,7 +158,7 @@ export class App {
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
-                this.updateAcmpData(1)
+                this.updateData(1)
                 .then(() => {
                 let channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
