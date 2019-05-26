@@ -2,7 +2,7 @@ import FileHound from 'filehound';
 
 export const getFolders = (path) => {
     let dirList = _getDirectories(path).map((dir) => {
-        return {'folder': dir};
+        return {'folder': dir.replace(path, "")};
     });
     return dirList;
 };
