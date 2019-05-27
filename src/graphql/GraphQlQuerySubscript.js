@@ -15,6 +15,8 @@ export const CCG_QUERY_SUBSCRIPTION = gql `
             layer(ch: Int!, l: Int!): String
             timeLeft(ch: Int!, l: Int!): String
             mediaFolders: [Folder]
+            dataFolders: [Folder]
+            templateFolders: [Folder]
         },
         type Channels {
             layers: [Layers]

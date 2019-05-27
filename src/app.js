@@ -10,7 +10,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
-import { mediaFileWatchSetup , mediaFolderWatchSetup } from './FileFolderWatchers';
+import { mediaFileWatchSetup , mediaFolderWatchSetup, dataFolderWatchSetup, templateFolderWatchSetup } from './FileFolderWatchers';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -40,9 +40,14 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
-        //Setup media path watcher :
+        //Setup folder watchers :
         mediaFolderWatchSetup(this.configFile.configuration.paths['media-path']._text);
         console.log("Media Folders :", global.mediaFolders);
+        dataFolderWatchSetup(this.configFile.configuration.paths['data-path']._text);
+        console.log("Data Folders :", global.mediaFolders);
+        templateFolderWatchSetup(this.configFile.configuration.paths['template-path']._text);
+        console.log("Template Folders :", global.mediaFolders);
+
 
         //Setup GraphQL:
         this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);

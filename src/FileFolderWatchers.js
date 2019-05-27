@@ -22,12 +22,44 @@ export const mediaFileWatchSetup = (folder, pubsub) => {
 };
 
 
-//Follow media directories and pubsub if changes occour:
+//Follow media directories and update mediaFolders if changes occour:
 export const mediaFolderWatchSetup = (folder) => {
     chokidar.watch(folder,
         {ignored: /(^|[\/\\])\../})
         .on('all', (event, path) => {
             global.mediaFolders = getFolders(folder);
+        })
+        .on('ready', (event, path) => {
+            console.log("Media Folder Watch Ready ");
+        })
+        .on('error', (event,path) => {
+            console.log("Media Folder Watch Error:",event, path);
+        })
+        ;
+};
+
+//Follow data directories and update mediaFolders if changes occour:
+export const dataFolderWatchSetup = (folder) => {
+    chokidar.watch(folder,
+        {ignored: /(^|[\/\\])\../})
+        .on('all', (event, path) => {
+            global.dataFolders = getFolders(folder);
+        })
+        .on('ready', (event, path) => {
+            console.log("Media Folder Watch Ready ");
+        })
+        .on('error', (event,path) => {
+            console.log("Media Folder Watch Error:",event, path);
+        })
+        ;
+};
+
+//Follow template directories and update mediaFolders if changes occour:
+export const templateFolderWatchSetup = (folder) => {
+    chokidar.watch(folder,
+        {ignored: /(^|[\/\\])\../})
+        .on('all', (event, path) => {
+            global.templateFolders = getFolders(folder);
         })
         .on('ready', (event, path) => {
             console.log("Media Folder Watch Ready ");
