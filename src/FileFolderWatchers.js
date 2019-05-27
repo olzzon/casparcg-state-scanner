@@ -9,7 +9,7 @@ export const mediaFileWatchSetup = (folder, pubsub) => {
         .on('all', (event, path) => {
             setTimeout(() => {
                 pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
-                console.log("File/Folder Changes :" ,event, path);
+                console.log("Media Files Changes :" ,event, path);
             }, 10);
         })
         .on('ready', (event, path) => {
@@ -46,10 +46,10 @@ export const dataFolderWatchSetup = (folder) => {
             global.dataFolders = getFolders(folder);
         })
         .on('ready', (event, path) => {
-            console.log("Media Folder Watch Ready ");
+            console.log("Data Folder Watch Ready ");
         })
         .on('error', (event,path) => {
-            console.log("Media Folder Watch Error:",event, path);
+            console.log("Data Folder Watch Error:",event, path);
         })
         ;
 };
@@ -62,10 +62,10 @@ export const templateFolderWatchSetup = (folder) => {
             global.templateFolders = getFolders(folder);
         })
         .on('ready', (event, path) => {
-            console.log("Media Folder Watch Ready ");
+            console.log("Template Folder Watch Ready ");
         })
         .on('error', (event,path) => {
-            console.log("Media Folder Watch Error:",event, path);
+            console.log("Template Folder Watch Error:",event, path);
         })
         ;
 };

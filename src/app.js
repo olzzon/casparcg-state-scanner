@@ -42,12 +42,8 @@ export class App {
 
         //Setup folder watchers :
         mediaFolderWatchSetup(this.configFile.configuration.paths['media-path']._text);
-        console.log("Media Folders :", global.mediaFolders);
         dataFolderWatchSetup(this.configFile.configuration.paths['data-path']._text);
-        console.log("Data Folders :", global.mediaFolders);
         templateFolderWatchSetup(this.configFile.configuration.paths['template-path']._text);
-        console.log("Template Folders :", global.mediaFolders);
-
 
         //Setup GraphQL:
         this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
