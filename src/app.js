@@ -3,7 +3,6 @@ import net from 'net'; // Used for TCP log server
 
 //Modules:
 import { CasparCG } from 'casparcg-connection';
-import chokidar from 'chokidar'; //Used to watch filesystem for changes
 
 //Utils:
 import {cleanUpFilename, extractFilenameFromPath} from './utils/filePathStringHandling';
@@ -11,7 +10,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
-import { getFolders } from './utils/getFolderStructure';
+import { mediaFileWatchSetup , mediaFolderWatchSetup, dataFolderWatchSetup, templateFolderWatchSetup } from './FileFolderWatchers';
 import * as Globals from './utils/CONSTANTS';
 
 
@@ -41,12 +40,13 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
-        //Get folder structure in media path:
-        this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
-        console.log("Media Folders :", this.mediaFolders);
+        //Setup folder watchers :
+        mediaFolderWatchSetup(this.configFile.configuration.paths['media-path']._text);
+        dataFolderWatchSetup(this.configFile.configuration.paths['data-path']._text);
+        templateFolderWatchSetup(this.configFile.configuration.paths['template-path']._text);
 
         //Setup GraphQL:
-        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel, this.mediaFolders);
+        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
 
         //Check CCG Version and initialise OSC server:
         console.log("Checking CasparCG connection");
@@ -59,15 +59,15 @@ export class App {
             if (this.serverVersion < "2.2") {
                 //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
                 this.setupCasparTcpLogServer();
-                this.fileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text);
+                mediaFileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text, this.pubsub);
             } else {
-                this.fileWatchSetup(this.configFile.configuration.paths['media-path']._text);
+                mediaFileWatchSetup(this.configFile.configuration.paths['media-path']._text, this.pubsub);
             }
             //OSC server will not recieve data before a CCG connection is established:
             this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels, this.serverVersion);
         })
         .catch((error) => {
-            console.log("No connection to CasparCG");
+            console.log("No connection to CasparCG", error);
         });
 
 
@@ -94,27 +94,6 @@ export class App {
             });
         },
         3000);
-    }
-
-    //Follow media directories and pubsub if changes occour:
-    fileWatchSetup(folder) {
-        chokidar.watch(folder,
-            {ignored: /(^|[\/\\])\../})
-            .on('all', (event, path) => {
-                setTimeout(() => {
-                    this.pubsub.publish(Globals.PUBSUB_MEDIA_FILE_CHANGED, { mediaFilesChanged: true });
-                    console.log("File/Folder Changes :" ,event, path);
-                }, 10);
-                //Update mediaFolders:
-                this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
-            })
-            .on('ready', (event, path) => {
-                console.log("File/Folder Watch Ready ");
-            })
-            .on('error', (event,path) => {
-                console.log("File/Foler Watch Error:",event, path);
-            })
-            ;
     }
 
     // Rest of the code is for

@@ -55,7 +55,13 @@ export class CcgGraphQlServer {
                     return this.getServerOnline();
                 },
                 mediaFolders: () => {
-                    return this.mediaFolders;
+                    return global.mediaFolders;
+                },
+                dataFolders: () => {
+                    return global.dataFolders;
+                },
+                templateFolders: () => {
+                    return global.templateFolders;
                 },
                 serverVersion: () => {
                     return this.serverVersion;
