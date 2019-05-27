@@ -10,8 +10,7 @@ import { generateCcgDataStructure } from './utils/ccgDatasctructure';
 import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
-import { mediaFileWatchSetup } from './FileFolderWatchers';
-import { getFolders } from './utils/getFolderStructure';
+import { mediaFileWatchSetup , mediaFolderWatchSetup } from './FileFolderWatchers';
 import * as Globals from './utils/CONSTANTS';
 
 
