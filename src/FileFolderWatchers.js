@@ -23,11 +23,11 @@ export const mediaFileWatchSetup = (folder, pubsub) => {
 
 
 //Follow media directories and pubsub if changes occour:
-export const mediaFolderWatchSetup = (mediaFolders, folder) => {
+export const mediaFolderWatchSetup = (folder) => {
     chokidar.watch(folder,
         {ignored: /(^|[\/\\])\../})
         .on('all', (event, path) => {
-            mediaFolders = getFolders(folder);
+            global.mediaFolders = getFolders(folder);
         })
         .on('ready', (event, path) => {
             console.log("Media Folder Watch Ready ");
