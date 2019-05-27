@@ -59,15 +59,15 @@ export class App {
             if (this.serverVersion < "2.2") {
                 //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
                 this.setupCasparTcpLogServer();
-                mediaFileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text);
+                mediaFileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text, this.pubsub);
             } else {
-                mediaFileWatchSetup(this.configFile.configuration.paths['media-path']._text);
+                mediaFileWatchSetup(this.configFile.configuration.paths['media-path']._text, this.pubsub);
             }
             //OSC server will not recieve data before a CCG connection is established:
             this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels, this.serverVersion);
         })
         .catch((error) => {
-            console.log("No connection to CasparCG");
+            console.log("No connection to CasparCG", error);
         });
 
 
