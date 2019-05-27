@@ -40,8 +40,8 @@ export class App {
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
         this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
 
-        //Get folder structure in media path:
-        this.mediaFolders = getFolders(this.configFile.configuration.paths['media-path']._text);
+        //Setup media path watcher :
+        mediaFolderWatchSetup(this.mediaFolders);
         console.log("Media Folders :", this.mediaFolders);
 
         //Setup GraphQL:
