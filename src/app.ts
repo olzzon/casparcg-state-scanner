@@ -14,7 +14,7 @@ import { mediaFileWatchSetup , mediaFolderWatchSetup, dataFolderWatchSetup, temp
 
 //Types:
 import * as DEFAULTS from './utils/CONSTANTS';
-import { ccgChannel, ccgChannels } from './types/ICcgDataStructure';
+import { ccgChannel, ccgChannels } from './@types/ICcgDataStructure';
 
 //GraphQl:
 import { PubSub } from 'apollo-server';

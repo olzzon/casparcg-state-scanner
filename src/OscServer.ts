@@ -4,7 +4,7 @@ import osc from 'osc'; //Using OSC fork from PieceMeta/osc.js as it has excluded
 
 //Types:
 import * as DEFAULTS from './utils/CONSTANTS';
-import { ccgChannel, ccgLayer, ccgChannels } from './types/ICcgDataStructure';
+import { ccgChannel, ccgLayer, ccgChannels } from './@types/ICcgDataStructure';
 
 export class OscServer {
     pubsub: any;

@@ -1,4 +1,4 @@
-import { ccgChannel, ccgChannels } from '../types/ICcgDataStructure';
+import { ccgChannel, ccgChannels } from '../@types/ICcgDataStructure';
 
 export const generateCcgDataStructure = ((ccgNumberOfChannels: number): ccgChannels => {
     let ccgChannels: ccgChannels = [];

@@ -14,8 +14,6 @@
       "isolatedModules": false,
       // Import non-ES modules as default imports.
       "esModuleInterop": true,
-      // ToDo: IGNORE ANY-types UNTIL FULL TRANSFORMED
-      "noImplicitAny": false,
     },
     "include": [
       "src"
