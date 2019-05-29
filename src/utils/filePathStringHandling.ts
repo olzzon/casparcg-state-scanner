@@ -1,5 +1,5 @@
 
-export const cleanUpFilename = (filename) => {
+export const cleanUpFilename = (filename: string): string => {
     // casparcg-connection library bug: returns filename with media// or media/
     return (filename.replace(/\\/g, '/')
         .replace('media//', '')
@@ -9,7 +9,7 @@ export const cleanUpFilename = (filename) => {
     );
 };
 
-export const extractFilenameFromPath = (filename) => {
+export const extractFilenameFromPath = (filename: string): string => {
     return filename.replace(/^.*[\\\/]/, '');
 };
 
