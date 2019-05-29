@@ -3,15 +3,18 @@ import { ApolloServer } from 'apollo-server';
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
 //Utils:
-import * as Globals from './utils/CONSTANTS';
+import './global';
+import * as DEFAULTS from './utils/CONSTANTS';
 
 
 export class CcgGraphQlServer {
-    constructor(pubsub, ccgChannel, mediaFolders) {
+    serverOnline: boolean = false;
+    pubsub: any;
+    ccgChannel: any;
+
+    constructor(pubsub: any, ccgChannel: any) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
-        this.mediaFolders = mediaFolders;
-        this.serverOnline = false;
 
         this.setServerOnline = this.setServerOnline.bind(this);
         this.getServerOnline = this.getServerOnline.bind(this);
@@ -24,19 +27,19 @@ export class CcgGraphQlServer {
         const resolvers = {
             Subscription: {
                 channels: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_CHANNELS_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([DEFAULTS.PUBSUB_CHANNELS_UPDATED]),
                 },
                 playLayer: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_PLAY_LAYER_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([DEFAULTS.PUBSUB_PLAY_LAYER_UPDATED]),
                 },
                 infoChannelUpdated: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_INFO_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([DEFAULTS.PUBSUB_INFO_UPDATED]),
                 },
                 timeLeft: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_TIMELEFT_UPDATED]),
+                    subscribe: () => this.pubsub.asyncIterator([DEFAULTS.PUBSUB_TIMELEFT_UPDATED]),
                 },
                 mediaFilesChanged: {
-                    subscribe: () => this.pubsub.asyncIterator([Globals.PUBSUB_MEDIA_FILE_CHANGED]),
+                    subscribe: () => this.pubsub.asyncIterator([DEFAULTS.PUBSUB_MEDIA_FILE_CHANGED]),
                 }
 
             },
@@ -44,11 +47,11 @@ export class CcgGraphQlServer {
                 channels: () => {
                     return this.ccgChannel;
                 },
-                layer: (obj, args, context, info) => {
+                layer: (obj: any, args: any, context: any, info: any) => {
                     const ccgLayerString = JSON.stringify(this.ccgChannel[args.ch-1].layer[args.l-1]);
                     return ccgLayerString;
                 },
-                timeLeft: (obj, args, context, info) => {
+                timeLeft: (obj: any, args: any, context: any, info: any) => {
                     return (this.ccgChannel[args.ch-1].layer[args.l-1].foreground.length - this.ccgChannel[args.ch-1].layer[args.l-1].foreground.time);
                 },
                 serverOnline: () => {
@@ -64,34 +67,34 @@ export class CcgGraphQlServer {
                     return global.templateFolders;
                 },
                 serverVersion: () => {
-                    return this.serverVersion;
+                    return global.serverVersion;
                 }
             },
             Channels: {
-                layers: (root) => root.layer
+                layers: (root: any) => root.layer
             },
             Layers: {
-                foreground: (root) => root.foreground,
-                background: (root) => root.background
+                foreground: (root: any) => root.foreground,
+                background: (root: any) => root.background
             },
             Foreground: {
-                name: (root) => { return root.name; },
-                path: (root) => { return root.path; },
-                length: (root) => { return root.length; },
-                loop: (root) => { return root.loop; },
-                paused: (root) => { return root.paused; }
+                name: (root: any) => { return root.name; },
+                path: (root: any) => { return root.path; },
+                length: (root: any) => { return root.length; },
+                loop: (root: any) => { return root.loop; },
+                paused: (root: any) => { return root.paused; }
             },
             Background: {
-                name: (root) => { return root.name; },
-                path: (root) => { return root.path; },
-                length: (root) => { return root.length; },
-                loop: (root) => { return root.loop; }
+                name: (root: any) => { return root.name; },
+                path: (root: any) => { return root.path; },
+                length: (root: any) => { return root.length; },
+                loop: (root: any) => { return root.loop; }
             },
             Timeleft: {
-                timeLeft: (root) => {
-                    return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.length - root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time;
+                timeLeft: (root: any) => {
+                    return root.layer[DEFAULTS.CCG_DEFAULT_LAYER-1].foreground.length - root.layer[DEFAULTS.CCG_DEFAULT_LAYER-1].foreground.time;
                 },
-                time: (root) => { return root.layer[Globals.CCG_DEFAULT_LAYER-1].foreground.time; }
+                time: (root: any) => { return root.layer[DEFAULTS.CCG_DEFAULT_LAYER-1].foreground.time; }
             }
         };
 
@@ -101,10 +104,10 @@ export class CcgGraphQlServer {
             resolvers
         });
 
-        server.listen(Globals.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${Globals.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
+        server.listen(DEFAULTS.DEFAULT_GRAPHQL_PORT, () => console.log(`GraphQl listening on port ${DEFAULTS.DEFAULT_GRAPHQL_PORT}${server.graphqlPath}`));
     }
 
-    setServerOnline(state) {
+    setServerOnline(state: boolean) {
         this.serverOnline = state;
     }
     getServerOnline() {

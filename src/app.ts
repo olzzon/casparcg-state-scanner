@@ -11,17 +11,28 @@ import { readCasparCgConfigFile } from './utils/casparCGconfigFileReader';
 import { OscServer } from './OscServer';
 import { CcgGraphQlServer } from './GraphQlServer';
 import { mediaFileWatchSetup , mediaFolderWatchSetup, dataFolderWatchSetup, templateFolderWatchSetup } from './FileFolderWatchers';
-import * as Globals from './utils/CONSTANTS';
 
+//Types:
+import * as DEFAULTS from './utils/CONSTANTS';
+import { ccgChannel, ccgChannels } from './@types/ICcgDataStructure';
 
 //GraphQl:
 import { PubSub } from 'apollo-server';
 
 export class App {
+    pubsub: PubSub;
+    ccgConnection: CasparCG;
+    configFile: any;
+    ccgNumberOfChannels: number;
+    ccgChannel: ccgChannels;
+    graphQlServer: CcgGraphQlServer;
+    oscServer: any;
+
     constructor() {
+
         //Binds:
         this.connectLog = this.connectLog.bind(this);
-        this.startSubscriptions = this.startTimerControlledServices.bind(this);
+        this.startTimerControlledServices = this.startTimerControlledServices.bind(this);
 
         //PubSub:
         this.pubsub = new PubSub();
@@ -29,8 +40,8 @@ export class App {
         //Setup AMCP Connection:
         this.ccgConnection = new CasparCG(
             {
-                host: Globals.CCG_HOST,
-                port: Globals.CCG_AMCP_PORT,
+                host: DEFAULTS.CCG_HOST,
+                port: DEFAULTS.CCG_AMCP_PORT,
                 autoConnect: true,
             }
         );
@@ -52,11 +63,11 @@ export class App {
         console.log("Checking CasparCG connection");
         this.ccgConnection.version()
         .then((response) => {
-            console.log("AMCP connection established to: ", Globals.CCG_HOST, ":", Globals.CCG_AMCP_PORT);
+            console.log("AMCP connection established to: ", DEFAULTS.CCG_HOST, ":", DEFAULTS.CCG_AMCP_PORT);
             console.log("CasparCG Server Version :", response.response.data);
-            this.serverVersion = response.response.data;
+            global.serverVersion = response.response.data;
 
-            if (this.serverVersion < "2.2") {
+            if (global.serverVersion < "2.2") {
                 //TCP Log is used for triggering fetch of AMCP INFO on CCG 2.1
                 this.setupCasparTcpLogServer();
                 mediaFileWatchSetup(this.configFile.configuration.paths['thumbnail-path']._text, this.pubsub);
@@ -64,7 +75,7 @@ export class App {
                 mediaFileWatchSetup(this.configFile.configuration.paths['media-path']._text, this.pubsub);
             }
             //OSC server will not recieve data before a CCG connection is established:
-            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels, this.serverVersion);
+            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels);
         })
         .catch((error) => {
             console.log("No connection to CasparCG", error);
@@ -78,7 +89,7 @@ export class App {
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         const timeLeftSubscription = setInterval(() => {
             if (this.graphQlServer.getServerOnline()) {
-                this.pubsub.publish(Globals.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
+                this.pubsub.publish(DEFAULTS.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
             }
         },
         40);
@@ -100,18 +111,18 @@ export class App {
     // CCG 2.1 compatibility
     // And wil be maintanied as long as needed:
 
-    updateData(channel) {
+    updateData(channel: number) {
         return new Promise((resolve, reject) => {
             if (channel > this.ccgNumberOfChannels) {
                 resolve(true);
                 return;
             }
-            this.ccgConnection.info(channel,Globals.CCG_DEFAULT_LAYER)
+            this.ccgConnection.info(channel,DEFAULTS.CCG_DEFAULT_LAYER)
             .then((response) => {
-                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].foreground.name = extractFilenameFromPath(response.response.data.foreground.producer.filename);
-                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].background.name = extractFilenameFromPath(response.response.data.background.producer.filename || "");
-                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
-                this.ccgChannel[channel-1].layer[Globals.CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
+                this.ccgChannel[channel-1].layer[DEFAULTS.CCG_DEFAULT_LAYER-1].foreground.name = extractFilenameFromPath(response.response.data.foreground.producer.filename);
+                this.ccgChannel[channel-1].layer[DEFAULTS.CCG_DEFAULT_LAYER-1].background.name = extractFilenameFromPath(response.response.data.background.producer.filename || "");
+                this.ccgChannel[channel-1].layer[DEFAULTS.CCG_DEFAULT_LAYER-1].foreground.path = cleanUpFilename(response.response.data.foreground.producer.filename);
+                this.ccgChannel[channel-1].layer[DEFAULTS.CCG_DEFAULT_LAYER-1].background.path = cleanUpFilename(response.response.data.background.producer.filename || "");
 
                 this.updateData(channel + 1)
                 .then(() => {
@@ -131,14 +142,14 @@ export class App {
         //Setup TCP errorlog reciever:
         const casparLogClient = new net.Socket();
 
-        this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient);
+        this.connectLog(DEFAULTS.CCG_LOG_PORT, DEFAULTS.CCG_HOST, casparLogClient);
 
         casparLogClient.on('error', (error) => {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
-            console.log('casparcg tcp log should be set to IP: ' + Globals.CCG_HOST + " Port : " + Globals.CCG_LOG_PORT);
+            console.log('casparcg tcp log should be set to IP: ' + DEFAULTS.CCG_HOST + " Port : " + DEFAULTS.CCG_LOG_PORT);
             this.graphQlServer.setServerOnline(false);
-            let intervalConnect = setTimeout(() => this.connectLog(Globals.CCG_LOG_PORT, Globals.CCG_HOST, casparLogClient), 5000);
+            let intervalConnect = setTimeout(() => this.connectLog(DEFAULTS.CCG_LOG_PORT, DEFAULTS.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
             console.log("New LOG line: ", data.toString());
@@ -154,13 +165,13 @@ export class App {
         });
     }
 
-    connectLog(port, host, client) {
+    connectLog(port: number, host: string, client: any) {
         client.connect(port, host, () => {
             console.log('CasparLogClient connected to: ' + host + ':' + port);
         });
     }
 
-    readLogChannel(data, commandName, varName) {
+    readLogChannel(data: string, commandName: string) {
         let amcpCommand = data.substr(data.indexOf(commandName));
         let amcpChannel = parseInt(amcpCommand.substr(amcpCommand.indexOf(" ")+1, amcpCommand.indexOf("-")-1));
         let amcpLayer = parseInt(amcpCommand.substr(amcpCommand.indexOf("-")+1, 2));

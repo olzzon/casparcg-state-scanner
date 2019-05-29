@@ -4,7 +4,7 @@ import convert from 'xml-js';
 
 export const readCasparCgConfigFile = () => {
     //Read casparcg settingsfile (place a copy of it in this folder if stacanner is not installed in server folder)
-    let data = fs.readFileSync('casparcg.config');
+    let data = String(fs.readFileSync('casparcg.config'));
     if (data === "") {
         data = "<channel></channel>";
     }
