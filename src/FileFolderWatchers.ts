@@ -1,7 +1,7 @@
 import chokidar from 'chokidar'; //Used to watch filesystem for changes
 import * as DEFAULTS from './utils/CONSTANTS';
 import { getFolders } from './utils/getFolderStructure';
-import './global.d.ts';
+import './global.ts';
 
 //Follow media directories and pubsub if changes occour:
 export const mediaFileWatchSetup = (folder: string, pubsub: any) => {
