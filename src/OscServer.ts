@@ -78,8 +78,8 @@ export class OscServer {
                 }
             }
         })
-        .on('error', () => {
-            console.log("Lost OSC connection");
+        .on('error', (error: any) => {
+            console.log("OSC error :", error);
         });
 
         oscConnection.open();
