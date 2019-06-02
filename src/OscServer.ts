@@ -88,31 +88,37 @@ export class OscServer {
     }
 
     publishInfoUpdate(channelIndex: number) {
-        let layerProto = {
-            "foreground": {
-                "name": "",
-                "path": "",
-                "time": 0.0,
-                "length": 0.0,
-                "loop": false,
-                "paused": true
-            },
-            "background": {
-                "name": "",
-                "path": "",
-                "time": 0,
-                "length": 0,
-                "loop": false,
-                "paused": true
-            }
-        };
-        let ccgPlayLayer: Array<ccgLayer> = [layerProto];
+        let channelsPlaylayer: Array<any> = [];
 
         for (let i=0; i<this.ccgNumberOfChannels; i++) {
-            ccgPlayLayer.push(layerProto);
-            ccgPlayLayer[i] = (this.ccgChannel[i].layer[DEFAULTS.CCG_DEFAULT_LAYER-1]);
+            channelsPlaylayer.push(
+                { layer: [] }
+            );
+            channelsPlaylayer[i] = {
+                "layer":
+                [{
+                    "foreground": {
+                        "name": "",
+                        "path": "",
+                        "time": 0.0,
+                        "length": 0.0,
+                        "loop": false,
+                        "paused": true
+                    },
+                    "background": {
+                        "name": "",
+                        "path": "",
+                        "time": 0,
+                        "length": 0,
+                        "loop": false,
+                        "paused": true
+                    }
+                }]
+            }
+            channelsPlaylayer[i].layer[0] = (this.ccgChannel[i].layer[DEFAULTS.CCG_DEFAULT_LAYER-1]);
         }
-        this.pubsub.publish(DEFAULTS.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: ccgPlayLayer });
+        console.log("Pubsub data PlayLayer : ", channelsPlaylayer);
+        this.pubsub.publish(DEFAULTS.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: channelsPlaylayer });
         this.pubsub.publish(DEFAULTS.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
         this.pubsub.publish(DEFAULTS.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
     }

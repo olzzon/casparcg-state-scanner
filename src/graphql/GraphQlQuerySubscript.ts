@@ -3,7 +3,7 @@ import gql from 'graphql-tag';
 export const CCG_QUERY_SUBSCRIPTION = gql `
         type Subscription {
             channels: [Channels]
-            playLayer : [Channels]
+            playLayer: [Channels]
             infoChannelUpdated: String
             timeLeft: [Timeleft]
             mediaFilesChanged: Boolean

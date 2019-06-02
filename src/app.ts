@@ -161,8 +161,8 @@ export class App {
             let intervalConnect = setTimeout(() => this.connectLog(DEFAULTS.CCG_LOG_PORT, DEFAULTS.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
-            console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
+                console.log("New LOG line: ", data.toString());
                 this.updateData(1)
                 .then(() => {
                 let channel = this.readLogChannel(data.toString(), "LOAD");
