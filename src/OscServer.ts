@@ -19,6 +19,7 @@ export class OscServer {
     }
 
     setupOscServer() {
+        let _this2 = this;
         const oscConnection = new osc.UDPPort({
             localAddress: "0.0.0.0",
             localPort: DEFAULTS.DEFAULT_OSC_PORT
@@ -40,40 +41,40 @@ export class OscServer {
             if (message.address.includes('/stage/layer')) {
                 //CCG 2.2 Handle OSC /file/path:
                 if (message.address.includes('foreground/file/path')) {
-                    if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
-                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        this.publishInfoUpdate(channelIndex);
+                    if (_this2.ccgChannel[channelIndex].layer[layerIndex].foreground.path != message.args[0]) {
+                        _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                        _this2.publishInfoUpdate(channelIndex);
                     }
                 }
                 if (message.address.includes('background/file/path')) {
-                    if (this.ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
-                        this.ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
-                        this.publishInfoUpdate(channelIndex);
+                    if (_this2.ccgChannel[channelIndex].layer[layerIndex].background.path != message.args[0]) {
+                        _this2.ccgChannel[channelIndex].layer[layerIndex].background.path = message.args[0];
+                        _this2.publishInfoUpdate(channelIndex);
                     }
                 }
                 if (message.address.includes('foreground/file/name')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
                 }
                 if (message.address.includes('background/file/name')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
                 }
                 if (message.address.includes('file/time')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.time = parseFloat(message.args[0]);
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.length = parseFloat(message.args[1]);
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
                 }
                 if (message.address.includes('loop')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
                 }
                 if (message.address.includes('/paused')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
+                    _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
                 }
 
                 //CCG 2.1 Handle OSC /file/path:
                 if (message.address.includes('file/path') && global.serverVersion < "2.2") {
-                    if (this.ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
-                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
-                        this.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
-                        this.publishInfoUpdate(channelIndex);
+                    if (_this2.ccgChannel[channelIndex].layer[layerIndex].foreground.name != message.args[0]) {
+                        _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.name = message.args[0];
+                        _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.path = message.args[0];
+                        _this2.publishInfoUpdate(channelIndex);
                     }
                 }
             }
