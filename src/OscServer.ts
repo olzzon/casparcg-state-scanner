@@ -58,8 +58,8 @@ export class OscServer {
                     this.ccgChannel[channelIndex].layer[layerIndex].background.name = message.args[0];
                 }
                 if (message.address.includes('file/time')) {
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.time = message.args[0];
-                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.length = message.args[1];
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.time = parseFloat(message.args[0]);
+                    this.ccgChannel[channelIndex].layer[layerIndex].foreground.length = parseFloat(message.args[1]);
                 }
                 if (message.address.includes('loop')) {
                     this.ccgChannel[channelIndex].layer[layerIndex].foreground.loop = message.args[0];
