@@ -3,7 +3,7 @@ import { ApolloServer } from 'apollo-server';
 import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
 
 //Utils:
-import './global.d.ts';
+import './global';
 import * as DEFAULTS from './utils/CONSTANTS';
 
 
