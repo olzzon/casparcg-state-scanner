@@ -18,7 +18,6 @@ import { ICcgChannels } from './utils/ccgDatasctructure';
 
 //GraphQl:
 import { PubSub } from 'apollo-server';
-import { watchFile } from 'fs';
 
 export class App {
     pubsub: PubSub;
