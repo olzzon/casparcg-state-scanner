@@ -14,7 +14,7 @@ import { mediaFileWatchSetup , mediaFolderWatchSetup, dataFolderWatchSetup, temp
 
 //Types:
 import * as DEFAULTS from './utils/CONSTANTS';
-import { ccgChannel, ccgChannels } from './@types/ICcgDataStructure';
+import { ICcgChannels } from './utils/ccgDatasctructure';
 
 //GraphQl:
 import { PubSub } from 'apollo-server';
@@ -25,7 +25,7 @@ export class App {
     ccgConnection: CasparCG;
     configFile: any;
     ccgNumberOfChannels: number;
-    ccgChannel: ccgChannels;
+    ccgChannel: ICcgChannels;
     graphQlServer: CcgGraphQlServer;
     oscServer: any;
     waitingForResponse: boolean = false;
@@ -51,7 +51,7 @@ export class App {
         //Define vars:
         this.configFile = readCasparCgConfigFile();
         this.ccgNumberOfChannels = this.configFile.configuration.channels.channel.length || 1;
-        this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels);
+        this.ccgChannel = generateCcgDataStructure(this.ccgNumberOfChannels, 30);
 
         //Setup folder watchers :
         mediaFolderWatchSetup(this.configFile.configuration.paths['media-path']._text);
