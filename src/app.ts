@@ -25,8 +25,6 @@ export class App {
     configFile: any;
     ccgNumberOfChannels: number;
     ccgChannel: ICcgChannels;
-    graphQlServer: CcgGraphQlServer;
-    oscServer: any;
     waitingForResponse: boolean = false;
 
     constructor() {
@@ -58,7 +56,7 @@ export class App {
         templateFolderWatchSetup(this.configFile.configuration.paths['template-path']._text);
 
         //Setup GraphQL:
-        this.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
+        global.graphQlServer = new CcgGraphQlServer(this.pubsub, this.ccgChannel);
 
         //Check CCG Version and initialise OSC server:
         console.log("Checking CasparCG connection");
@@ -76,7 +74,7 @@ export class App {
                 mediaFileWatchSetup(this.configFile.configuration.paths['media-path']._text, this.pubsub);
             }
             //OSC server will not recieve data before a CCG connection is established:
-            this.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels);
+            global.oscServer = new OscServer(this.pubsub, this.ccgChannel, this.ccgNumberOfChannels);
         })
         .catch((error) => {
             console.log("No connection to CasparCG", error);
@@ -89,7 +87,7 @@ export class App {
     startTimerControlledServices() {
         //Update of timeleft is set to a default 40ms (same as 25FPS)
         const timeLeftSubscription = setInterval(() => {
-            if (this.graphQlServer.getServerOnline()) {
+            if (global.graphQlServer.getServerOnline()) {
                 this.pubsub.publish(DEFAULTS.PUBSUB_TIMELEFT_UPDATED, { timeLeft: this.ccgChannel });
             }
         },
@@ -100,16 +98,16 @@ export class App {
                 this.waitingForResponse = true;
                 this.ccgConnection.version()
                 .then(() => {
-                    this.graphQlServer.setServerOnline(true);
+                    global.graphQlServer.setServerOnline(true);
                     this.waitingForResponse = false;
                 })
                 .catch((error) => {
                     console.log("Server not connected :", error);
-                    this.graphQlServer.setServerOnline(false);
+                    global.graphQlServer.setServerOnline(false);
                 });
             } else {
                 console.log("Server not connected");
-                this.graphQlServer.setServerOnline(false);
+                global.graphQlServer.setServerOnline(false);
             }
         },
         3000);
@@ -156,7 +154,7 @@ export class App {
             console.log("WARNING: LOAD and LOADBG commands will not update state as the");
             console.log("CasparCG server is offline or TCP log is not enabled in config", error);
             console.log('casparcg tcp log should be set to IP: ' + DEFAULTS.CCG_HOST + " Port : " + DEFAULTS.CCG_LOG_PORT);
-            this.graphQlServer.setServerOnline(false);
+            global.graphQlServer.setServerOnline(false);
             let intervalConnect = setTimeout(() => this.connectLog(DEFAULTS.CCG_LOG_PORT, DEFAULTS.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
@@ -166,7 +164,7 @@ export class App {
                 .then(() => {
                 let channel = this.readLogChannel(data.toString(), "LOAD");
                     if ( channel > 0) {
-                        this.oscServer.pulishInfoUpdate(channel, this.ccgChannel);
+                        global.oscServer.pulishInfoUpdate(channel, this.ccgChannel);
                     }
                 });
             }

@@ -1,6 +1,6 @@
 //GraphQl:
 import { ApolloServer } from 'apollo-server';
-import { CCG_QUERY_SUBSCRIPTION } from './graphql/GraphQlQuerySubscript';
+import { CCG_GQL_SCHEME } from './graphql/GraphQlScheme';
 
 //Utils:
 import './global';
@@ -98,7 +98,7 @@ export class CcgGraphQlServer {
             }
         };
 
-        const typeDefs = CCG_QUERY_SUBSCRIPTION;
+        const typeDefs = CCG_GQL_SCHEME;
         const server = new ApolloServer({
             typeDefs,
             resolvers

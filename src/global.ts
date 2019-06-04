@@ -3,6 +3,8 @@ declare module NodeJS {
         mediaFolders: string,
         dataFolders: string,
         templateFolders: string,
-        serverVersion: string;
+        serverVersion: string,
+        graphQlServer: any,
+        oscServer: any,
     }
 }
