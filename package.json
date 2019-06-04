@@ -7,7 +7,7 @@
   "license": "MIT",
   "dependencies": {
     "@types/graphql": "^14.2.0",
-    "apollo-server": "^2.5.0",
+    "apollo-server": "^2.6.1",
     "casparcg-connection": "^4.7.0",
     "chokidar": "^3.0.0",
     "filehound": "^1.17.0",
