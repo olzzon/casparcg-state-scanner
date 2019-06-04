@@ -31,7 +31,7 @@ export const mediaFolderWatchSetup = (folder: string) => {
             global.mediaFolders = getFolders(folder);
         })
         .on('ready', () => {
-            console.log("Media Folder Watch Ready ");
+            console.log("Media Folder \"", folder, "\" Watch Ready ");
         })
         .on('error', (event: any, path: any) => {
             console.log("Media Folder Watch Error:",event, path);
@@ -47,7 +47,7 @@ export const dataFolderWatchSetup = (folder: string) => {
             global.dataFolders = getFolders(folder);
         })
         .on('ready', () => {
-            console.log("Data Folder Watch Ready ");
+            console.log("Data Folder \"", folder, "\" Watch Ready ");
         })
         .on('error', (event: any, path: any) => {
             console.log("Data Folder Watch Error:",event, path);
@@ -63,7 +63,7 @@ export const templateFolderWatchSetup = (folder: string) => {
             global.templateFolders = getFolders(folder);
         })
         .on('ready', () => {
-            console.log("Template Folder Watch Ready ");
+            console.log("Template Folder \"", folder, "\" Watch Ready ");
         })
         .on('error', (event: any, path: any) => {
             console.log("Template Folder Watch Error:",event, path);
