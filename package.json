@@ -19,7 +19,7 @@
   },
   "scripts": {
     "buildOLD": "babel src -d dist",
-    "build": "babel src --out-dir dist --extensions '.ts,.tsx'",
+    "build": "babel src --out-dir dist --extensions \".ts,.tsx\"",
     "typecheck": "tsc",
     "start": "node ./dist/index.js",
     "debug": "node --inspect ./dist/index.js",

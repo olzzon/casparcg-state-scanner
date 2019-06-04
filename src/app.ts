@@ -18,6 +18,7 @@ import { ccgChannel, ccgChannels } from './@types/ICcgDataStructure';
 
 //GraphQl:
 import { PubSub } from 'apollo-server';
+import { watchFile } from 'fs';
 
 export class App {
     pubsub: PubSub;
@@ -27,6 +28,7 @@ export class App {
     ccgChannel: ccgChannels;
     graphQlServer: CcgGraphQlServer;
     oscServer: any;
+    waitingForResponse: boolean = false;
 
     constructor() {
 
@@ -95,14 +97,21 @@ export class App {
         40);
         //Check server online:
         const serverOnlineSubscription = setInterval(() => {
-            this.ccgConnection.version()
-            .then(() => {
-                this.graphQlServer.setServerOnline(true);
-            })
-            .catch((error) => {
-                console.log("Server not connected :", error);
+            if (!this.waitingForResponse) {
+                this.waitingForResponse = true;
+                this.ccgConnection.version()
+                .then(() => {
+                    this.graphQlServer.setServerOnline(true);
+                    this.waitingForResponse = false;
+                })
+                .catch((error) => {
+                    console.log("Server not connected :", error);
+                    this.graphQlServer.setServerOnline(false);
+                });
+            } else {
+                console.log("Server not connected");
                 this.graphQlServer.setServerOnline(false);
-            });
+            }
         },
         3000);
     }
@@ -152,8 +161,8 @@ export class App {
             let intervalConnect = setTimeout(() => this.connectLog(DEFAULTS.CCG_LOG_PORT, DEFAULTS.CCG_HOST, casparLogClient), 5000);
         });
         casparLogClient.on('data', (data) => {
-            console.log("New LOG line: ", data.toString());
             if (data.includes("LOADBG ") || data.includes("LOAD ") || data.includes("PLAY ")) {
+                console.log("New LOG line: ", data.toString());
                 this.updateData(1)
                 .then(() => {
                 let channel = this.readLogChannel(data.toString(), "LOAD");
