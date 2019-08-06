@@ -5,6 +5,7 @@ release-builds/
 
 # Development folders and files #
 #################################
+yarn.lock
 .tmp/
 dist/
 node_modules/
