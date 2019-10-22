@@ -1,6 +1,6 @@
 import gql from 'graphql-tag';
 
-export const CCG_QUERY_SUBSCRIPTION = gql `
+export const CCG_GQL_SCHEME = gql `
         type Subscription {
             channels: [Channels]
             playLayer: [Channels]

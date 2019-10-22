@@ -7,18 +7,17 @@
   "license": "MIT",
   "dependencies": {
     "@types/graphql": "^14.2.0",
-    "apollo-server": "^2.5.0",
+    "apollo-server": "^2.6.1",
     "casparcg-connection": "^4.7.0",
     "chokidar": "^3.0.0",
     "filehound": "^1.17.0",
     "graphql": "^14.3.1",
     "http": "^0.0.0",
-    "osc": "https://github.com/PieceMeta/osc.js/tarball/master",
+    "osc": "https://github.com/olzzon/tv2-osc.js-no-serialport.git",
     "tslib": "^1.9.3",
     "xml-js": "^1.6.8"
   },
   "scripts": {
-    "buildOLD": "babel src -d dist",
     "build": "babel src --out-dir dist --extensions \".ts,.tsx\"",
     "typecheck": "tsc",
     "start": "node ./dist/index.js",

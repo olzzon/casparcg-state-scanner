@@ -4,14 +4,14 @@ import osc from 'osc'; //Using OSC fork from PieceMeta/osc.js as it has excluded
 
 //Types:
 import * as DEFAULTS from './utils/CONSTANTS';
-import { ccgChannel, ccgLayer, ccgChannels } from './@types/ICcgDataStructure';
+import { ICcgChannels, generateCcgDataStructure } from './utils/ccgDatasctructure';
 
 export class OscServer {
     pubsub: any;
-    ccgChannel: ccgChannels;
+    ccgChannel: ICcgChannels;
     ccgNumberOfChannels: number;
 
-    constructor(pubsub: any, ccgChannel: ccgChannels, ccgNumberOfChannels: any) {
+    constructor(pubsub: any, ccgChannel: ICcgChannels, ccgNumberOfChannels: any) {
         this.pubsub = pubsub;
         this.ccgChannel = ccgChannel;
         this.ccgNumberOfChannels = ccgNumberOfChannels;
@@ -88,36 +88,14 @@ export class OscServer {
     }
 
     publishInfoUpdate(channelIndex: number) {
-        let channelsPlaylayer: Array<any> = [];
+        let channelsPlaylayer: ICcgChannels = generateCcgDataStructure(this.ccgNumberOfChannels, 1)
 
         for (let i=0; i<this.ccgNumberOfChannels; i++) {
-            channelsPlaylayer.push(
-                { layer: [] }
-            );
-            channelsPlaylayer[i] = {
-                "layer":
-                [{
-                    "foreground": {
-                        "name": "",
-                        "path": "",
-                        "time": 0.0,
-                        "length": 0.0,
-                        "loop": false,
-                        "paused": true
-                    },
-                    "background": {
-                        "name": "",
-                        "path": "",
-                        "time": 0,
-                        "length": 0,
-                        "loop": false,
-                        "paused": true
-                    }
-                }]
-            }
             channelsPlaylayer[i].layer[0] = (this.ccgChannel[i].layer[DEFAULTS.CCG_DEFAULT_LAYER-1]);
         }
+
         console.log("Pubsub data PlayLayer : ", channelsPlaylayer);
+
         this.pubsub.publish(DEFAULTS.PUBSUB_PLAY_LAYER_UPDATED, { playLayer: channelsPlaylayer });
         this.pubsub.publish(DEFAULTS.PUBSUB_INFO_UPDATED, { infoChannelUpdated: channelIndex });
         this.pubsub.publish(DEFAULTS.PUBSUB_CHANNELS_UPDATED, { channels: this.ccgChannel });
