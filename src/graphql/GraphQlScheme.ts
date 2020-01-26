@@ -31,12 +31,14 @@ export const CCG_GQL_SCHEME = gql `
             length: Float
             loop: Boolean
             paused: Boolean
+            producer: String
         }
         type Background {
             name: String
             path: String
             length: Float
             loop: Boolean
+            producer: String
         }
         type Timeleft {
             timeLeft: Float
