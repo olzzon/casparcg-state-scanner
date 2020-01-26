@@ -11,7 +11,7 @@ Be aware that CasparCG 2.2.xx has disabled OSC by default, so you need to enable
 ```
 <osc>
   <default-port>6250</default-port>
-  <disable-send-to-amcp-clients>false [true|false]</disable-send-to-amcp-clients>
+  <disable-send-to-amcp-clients>false</disable-send-to-amcp-clients>
   <predefined-clients>
     <predefined-client>
       <address>127.0.0.1</address>
