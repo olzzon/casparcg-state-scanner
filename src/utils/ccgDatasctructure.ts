@@ -10,7 +10,8 @@ export interface ICcgLayer {
         "time": number,
         "length": number,
         "loop": boolean,
-        "paused": boolean
+        "paused": boolean,
+        "producer": string
     },
     "background": {
         "name": string,
@@ -18,7 +19,8 @@ export interface ICcgLayer {
         "time": number,
         "length": number,
         "loop": boolean,
-        "paused": boolean
+        "paused": boolean,
+        "producer": string
     }
 }
 
@@ -40,7 +42,8 @@ export const generateCcgDataStructure = ((ccgNumberOfChannels: number, ccgNumber
                     "time": 0.0,
                     "length": 0.0,
                     "loop": false,
-                    "paused": true
+                    "paused": true,
+                    "producer": ""
                 },
                 "background": {
                     "name": "",
@@ -48,7 +51,8 @@ export const generateCcgDataStructure = ((ccgNumberOfChannels: number, ccgNumber
                     "time": 0,
                     "length": 0,
                     "loop": false,
-                    "paused": true
+                    "paused": true,
+                    "producer": ""
                 }
             })
         }

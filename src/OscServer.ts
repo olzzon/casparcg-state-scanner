@@ -68,6 +68,12 @@ export class OscServer {
                 if (message.address.includes('/paused')) {
                     _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.paused = message.args[0];
                 }
+                if (message.address.includes('/foreground/producer')) {
+                    if (_this2.ccgChannel[channelIndex].layer[layerIndex].foreground.producer !== message.args[0]) {
+                        _this2.ccgChannel[channelIndex].layer[layerIndex].foreground.producer = message.args[0];
+                        _this2.publishInfoUpdate(channelIndex);
+                    }
+                }
 
                 //CCG 2.1 Handle OSC /file/path:
                 if (message.address.includes('file/path') && global.serverVersion < "2.2") {
