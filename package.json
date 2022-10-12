@@ -6,7 +6,7 @@
   "author": "Kasper Olsson Hans (TV2 Denmark)",
   "license": "MIT",
   "dependencies": {
-    "apollo-server": "^2.9.16",
+    "apollo-server": "^2.25.4",
     "casparcg-connection": "^4.9.0",
     "chokidar": "^3.3.1",
     "filehound": "^1.17.3",
